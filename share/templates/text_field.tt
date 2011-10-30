@@ -1,0 +1,5 @@
+<div class="form-field text">
+    <label for="[% field.name %]">[% IF field.label %][% field.label %][% ELSE %][% field.name %][% END %][% IF field.required %] <em>*</em>[% END %]</label>
+    <input id="[% field.name %]" name="[% field.name %]" [% IF field.required %]required="required"[% END %] value="[% class.params.$this || field.value || field.default %]" [% IF field.max_length %]maxlength="[% field.max_length %]"[% ELSE %]maxlength="255"[% END %] class="[% field.name %]-control [% field.name %]" />
+    [% IF class.error(field.name).size() %]<span class="errors">[% class.error(field.name).join(', ') %]</span>[% END %]
+</div>
