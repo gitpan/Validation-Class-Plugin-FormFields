@@ -19,7 +19,9 @@ my %WriteMakefileArgs = (
     "File::ShareDir::Install" => "0.03"
   },
   "DISTNAME" => "Validation-Class-Plugin-FormFields",
-  "EXE_FILES" => [],
+  "EXE_FILES" => [
+    "bin/Validation-Class-Plugin-FormField-Templates.pl"
+  ],
   "LICENSE" => "perl",
   "NAME" => "Validation::Class::Plugin::FormFields",
   "PREREQ_PM" => {
@@ -28,7 +30,7 @@ my %WriteMakefileArgs = (
     "Template" => 0,
     "Validation::Class" => 0
   },
-  "VERSION" => "0.0.1",
+  "VERSION" => "0.0.5",
   "test" => {
     "TESTS" => "t/*.t"
   }

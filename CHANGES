@@ -1,4 +1,8 @@
 This file documents the revision history for the Perl library Validation::Class::Plugin::FormFields.
 
+0.0.5   2011-10-31
+        - Updated POD
+        - Add script to copy template to the CWD
+
 0.0.1   2011-10-29
         - (Alpha Release) Proof of concept

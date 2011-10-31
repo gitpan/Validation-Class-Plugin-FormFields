@@ -5,6 +5,7 @@ META.yml
 Makefile.PL
 README
 README.mkdn
+bin/Validation-Class-Plugin-FormField-Templates.pl
 lib/Validation/Class/Plugin/FormFields.pm
 share/templates/check_field.tt
 share/templates/file_field.tt
