@@ -3,7 +3,7 @@ NAME
     Field Renderer
 
 VERSION
-    version 0.0.6
+    version 0.0.7
 
 SYNOPSIS
         package MyApp::Validation;
@@ -247,7 +247,7 @@ HTML FORM FIELD TEMPLATES
     Once copied and modified to your liking, specify the current working
     directory in your validation class instance as follows:
 
-        my $form = MyVal->new;
+        my $form = MyVal::Validation->new;
         $form->field_templates_location($location);
 
 AUTHOR
