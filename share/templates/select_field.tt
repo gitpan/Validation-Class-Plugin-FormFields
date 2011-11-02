@@ -1,6 +1,6 @@
 <div class="form-field select">
-    <label for="[% field.name %]">[% IF field.label %][% field.label %][% ELSE %][% field.name %][% END %][% IF field.required %] <em>*</em>[% END %]</label>
-    <select id="[% field.name %]" name="[% field.name %]" class="[% field.name %]-control [% field.name %]">
+    <label for="[% field.name.safe_name() %]">[% IF field.label %][% field.label %][% ELSE %][% field.name.safe_name() %][% END %][% IF field.required %] <em>*</em>[% END %]</label>
+    <select id="[% field.name.safe_name() %]" name="[% field.name.safe_name() %]" class="[% field.name.safe_name() %]-control [% field.name.safe_name() %]">
     [% IF form.params.$this %]
         [% FOREACH option IN vars.options %]
             [%IF form.params.$this == option.value %]

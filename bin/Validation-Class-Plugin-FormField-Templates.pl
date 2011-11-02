@@ -7,12 +7,12 @@ use strict;
 
 package MyVal;
 {
-  $MyVal::VERSION = '0.0.7';
+  $MyVal::VERSION = '0.1.0';
 } use Validation::Class; __PACKAGE__->load_plugins('FormFields');
 
 package main ;
 {
-  $main::VERSION = '0.0.7';
+  $main::VERSION = '0.1.0';
 }
 
 use File::Copy;

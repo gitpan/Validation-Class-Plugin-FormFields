@@ -5,7 +5,7 @@ use warnings;
 
 package Validation::Class::Plugin::FormFields;
 {
-  $Validation::Class::Plugin::FormFields::VERSION = '0.0.7';
+  $Validation::Class::Plugin::FormFields::VERSION = '0.1.0';
 }
 
 use Moose::Role;
@@ -13,7 +13,7 @@ use File::ShareDir qw/dist_dir/;
 use Template;
 use Template::Stash;
 
-our $VERSION = '0.0.7'; # VERSION
+our $VERSION = '0.1.0'; # VERSION
 
 
 # field element templates
@@ -93,10 +93,34 @@ sub render_field {
     $content =~ s/(\w)\s{2,}/$1\n/mgi;               # poor-mans tidy attempt
     $content =~ s/\n\s{2,}\n/\n/mg;                  # poor-mans tidy attempt
     $content =~ s/(\w)\n([^\t])/$1 \n\n    $2/mg;    # poor-mans tidy attempt
+    $content =~ s/(.)\s{2,}(\w)/$1 $2/mg;            # poor-mans tidy attempt
     return "$content\n";
 }
 
 # define custom template virtual methods
+$Template::Stash::LIST_OPS->{ safe_name } = sub {
+    my $name  = shift;
+       $name  = "ARRAY" eq ref $name ? $name->[0] : $name;
+       $name  =~ s/[^a-zA-Z0-9\-\_]/\-/g;
+       
+    return $name;
+};
+$Template::Stash::LIST_OPS->{ safe_pattern } = sub {
+    my $pattern  = shift;
+       $pattern  = "ARRAY" eq ref $pattern ? $pattern->[0] : $pattern;
+       
+        unless ("Regexp" eq ref $pattern) {
+            $pattern =~ s/([^#X ])/\\$1/g;
+            $pattern =~ s/#/\\d/g;
+            $pattern =~ s/X/[a-zA-Z]/g;
+            $pattern = qr/$pattern/;
+        }
+        
+        # now for the nasty part
+        ($pattern) = $pattern =~ /\(\?\-xism\:(.*)\)/;
+       
+    return $pattern;
+};
 $Template::Stash::LIST_OPS->{ in_array } = sub {
     my $list  = shift;
     my $query = shift;
@@ -115,7 +139,7 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 =head1 VERSION
 
-version 0.0.7
+version 0.1.0
 
 =head1 SYNOPSIS
 
@@ -353,6 +377,18 @@ text input form field.
 
     # renders a single textbox
     my $text = $form->render_field($field, 'text');
+
+The HTML5 specification support an array of input types. You can cast the
+standard text input element into other type by specifying a type parameter as
+follows:
+
+    # renders an email textbox
+    my $email = $form->render_field($field, 'text', { type => 'email' });
+    
+    # renders a url textbox
+    my $website = $form->render_field($field, 'text', { type => 'url' });
+    
+    ...
 
 =head3 textarea
 

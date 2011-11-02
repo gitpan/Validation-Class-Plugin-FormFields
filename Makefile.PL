@@ -28,9 +28,9 @@ my %WriteMakefileArgs = (
     "File::Copy" => 0,
     "File::ShareDir" => 0,
     "Template" => 0,
-    "Validation::Class" => 0
+    "Validation::Class" => "2.4.5"
   },
-  "VERSION" => "0.0.7",
+  "VERSION" => "0.1.0",
   "test" => {
     "TESTS" => "t/*.t"
   }

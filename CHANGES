@@ -1,5 +1,9 @@
 This file documents the revision history for the Perl library Validation::Class::Plugin::FormFields.
 
+0.1.0   2011-10-31
+        - Updated POD
+        - Renders HTML5 form fields
+
 0.0.7   2011-10-31
         - Updated POD
         - Added missing variable to template renderer

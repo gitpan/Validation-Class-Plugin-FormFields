@@ -52,7 +52,7 @@ my $html = '';
 ok 'form rendered html for login', $html;
 ok 'login rendered label', has $html, '<label for="login">';
 ok 'login did not render an error', ! has $html, '<span class="errors">';
-ok 'login rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'login rendered input:text', has $html, 'type="text"';
 
    $form->validate('login');
    $html = $form->render_field('login', 'text');
@@ -62,7 +62,7 @@ ok 'form rendered html for login', $html;
 ok 'login rendered label', has $html, '<label for="login">';
 ok 'login rendered errors', has $html, '<span class="errors">';
 ok 'login errors consistent', has $html, '<span class="errors">Login invalid.';
-ok 'login rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'login rendered input:text', has $html, 'type="text"';
 
    $html = $form->render_field('password', 'text');
    diag 'processing the password field';
@@ -70,7 +70,7 @@ ok 'login rendered input:text', has $html, 'input' && has $html, 'type="text"';
 ok 'form rendered html for password', $html;
 ok 'password rendered label', has $html, '<label for="password">';
 ok 'password did not render an error', ! has $html, '<span class="errors">';
-ok 'password rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'password rendered input:text', has $html, 'type="text"';
 
    $form->validate('password');
    $html = $form->render_field('password', 'text');
@@ -80,7 +80,7 @@ ok 'form rendered html for password', $html;
 ok 'password rendered label', has $html, '<label for="password">';
 ok 'password rendered errors', has $html, '<span class="errors">';
 ok 'password errors consistent', has $html, '<span class="errors">Password invalid.';
-ok 'password rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'password rendered input:text', has $html, 'type="text"';
 
    $form->validate('login', 'password');
    $html = join "\n",
@@ -93,12 +93,12 @@ ok 'form rendered html for login', $html;
 ok 'login rendered label', has $html, '<label for="login">';
 ok 'login rendered errors', has $html, '<span class="errors">';
 ok 'login errors consistent', has $html, '<span class="errors">Login invalid.';
-ok 'login rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'login rendered input:text', has $html, 'type="text"';
 ok 'form rendered html for password', $html;
 ok 'password rendered label', has $html, '<label for="password">';
 ok 'password rendered errors', has $html, '<span class="errors">';
 ok 'password errors consistent', has $html, '<span class="errors">Password invalid.';
-ok 'password rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'password rendered input:text', has $html, 'type="text"';
 
    $form->params->{login} = 'admin';
    $form->validate('login', 'password');
@@ -111,12 +111,12 @@ ok 'password rendered input:text', has $html, 'input' && has $html, 'type="text"
 ok 'form rendered html for login', $html;
 ok 'login rendered label', has $html, '<label for="login">';
 ok 'login did not render errors', has $html, '<span class="errors">';
-ok 'login rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'login rendered input:text', has $html, 'type="text"';
 ok 'form rendered html for password', $html;
 ok 'password rendered label', has $html, '<label for="password">';
 ok 'password rendered errors', has $html, '<span class="errors">';
 ok 'password errors consistent', has $html, '<span class="errors">Password invalid.';
-ok 'password rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'password rendered input:text', has $html, 'type="text"';
 
    $form->params->{login} = 'wrong';
    $form->validate('login', 'password');
@@ -130,10 +130,10 @@ ok 'form rendered html for login', $html;
 ok 'login rendered label', has $html, '<label for="login">';
 ok 'login rendered errors', has $html, '<span class="errors">';
 ok 'login errors consistent', has $html, '<span class="errors">Login invalid.';
-ok 'login rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'login rendered input:text', has $html, 'type="text"';
 ok 'form rendered html for password', $html;
 ok 'password rendered label', has $html, '<label for="password">';
 ok 'password rendered errors', has $html, '<span class="errors">';
 ok 'password errors consistent', has $html, '<span class="errors">Password invalid.';
-ok 'password rendered input:text', has $html, 'input' && has $html, 'type="text"';
+ok 'password rendered input:text', has $html, 'type="text"';
 

@@ -1,25 +1,25 @@
 <div class="form-field check">
     [% IF vars.options %]
-    <label>[% IF field.label %][% field.label %][% ELSE %][% field.name %][% END %]</label>
+    <label>[% IF field.label %][% field.label %][% ELSE %][% field.name.safe_name() %][% END %]</label>
     [% IF form.params.$this %]
         [% FOREACH option IN vars.options %]
             [%IF form.params.$this.in_array(option.value) %]
-    <input id="[% field.name %]" name="[% field.name %]" type="check" value="[% option.value %]" checked="true" class="[% field.name %]-control [% field.name %]"> [% option.text %] 
+    <input id="[% field.name.safe_name() %]" name="[% field.name.safe_name() %]" type="check" value="[% option.value %]" checked="true" class="[% field.name.safe_name() %]-control [% field.name.safe_name() %]"> [% option.text %] 
             [% ELSE %]
-    <input id="[% field.name %]" name="[% field.name %]" type="check" value="[% option.value %]" class="[% field.name %]-control [% field.name %]"> [% option.text %] 
+    <input id="[% field.name.safe_name() %]" name="[% field.name.safe_name() %]" type="check" value="[% option.value %]" class="[% field.name.safe_name() %]-control [% field.name.safe_name() %]"> [% option.text %] 
             [% END %]
         [% END %]
     [% ELSE %]
         [% FOREACH option IN vars.options %]
             [% IF vars.select.in_array(option.value) %]
-    <input id="[% field.name %]" name="[% field.name %]" type="check" value="[% option.value %]" checked="true" class="[% field.name %]-control [% field.name %]"> [% option.text %] 
+    <input id="[% field.name.safe_name() %]" name="[% field.name.safe_name() %]" type="check" value="[% option.value %]" checked="true" class="[% field.name.safe_name() %]-control [% field.name.safe_name() %]"> [% option.text %] 
             [% ELSE %]
-    <input id="[% field.name %]" name="[% field.name %]" type="check" value="[% option.value %]" class="[% field.name %]-control [% field.name %]"> [% option.text %] 
+    <input id="[% field.name.safe_name() %]" name="[% field.name.safe_name() %]" type="check" value="[% option.value %]" class="[% field.name.safe_name() %]-control [% field.name.safe_name() %]"> [% option.text %] 
             [% END %]
         [% END %]
     [% END %]
     [% ELSE %]
-    <input type="check" id="[% field.name %]" name="[% field.name %]" value="[% form.params.$this || field.value %]" class="[% field.name %]-control [% field.name %]" /> <label>[% IF field.label %][% field.label %][% ELSE %][% field.name %][% END %]</label>
+    <input type="check" id="[% field.name.safe_name() %]" name="[% field.name.safe_name() %]" value="[% form.params.$this || field.value %]" class="[% field.name.safe_name() %]-control [% field.name.safe_name() %]" /> <label>[% IF field.label %][% field.label %][% ELSE %][% field.name.safe_name() %][% END %]</label>
     [% END %]
     [% IF class.error(field.name).size() %]<span class="errors">[% class.error(field.name).join(', ') %]</span>[% END %]
 </div>

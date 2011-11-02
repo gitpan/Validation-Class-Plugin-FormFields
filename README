@@ -3,7 +3,7 @@ NAME
     Field Renderer
 
 VERSION
-    version 0.0.7
+    version 0.1.0
 
 SYNOPSIS
         package MyApp::Validation;
@@ -228,6 +228,18 @@ METHODS
 
         # renders a single textbox
         my $text = $form->render_field($field, 'text');
+
+    The HTML5 specification support an array of input types. You can cast
+    the standard text input element into other type by specifying a type
+    parameter as follows:
+
+        # renders an email textbox
+        my $email = $form->render_field($field, 'text', { type => 'email' });
+        
+    # renders a url textbox
+        my $website = $form->render_field($field, 'text', { type => 'url' });
+        
+    ...
 
    textarea
     The textarea option instructs the render_field method to produce a
