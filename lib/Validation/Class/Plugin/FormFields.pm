@@ -5,7 +5,7 @@ use warnings;
 
 package Validation::Class::Plugin::FormFields;
 {
-  $Validation::Class::Plugin::FormFields::VERSION = '0.22';
+  $Validation::Class::Plugin::FormFields::VERSION = '0.30';
 }
 
 use Template;
@@ -13,7 +13,7 @@ use Template::Stash;
 
 use File::ShareDir qw/dist_dir/;
 
-our $VERSION = '0.22'; # VERSION
+our $VERSION = '0.30'; # VERSION
 
 
 # hook into the validation classes initilization
@@ -22,11 +22,7 @@ sub new {
     
     my ($plugin, $caller) = @_;
     
-    my $class = ref $caller;
-    
-    no strict 'refs';
-    
-    *{"${class}::form_fields"} = sub {
+    $caller->set_method( form_fields => sub {
         
         return bless {
             
@@ -61,7 +57,7 @@ sub new {
             
         }, $plugin;
         
-    };
+    } );
     
 }
 
@@ -155,7 +151,7 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 =head1 VERSION
 
-version 0.22
+version 0.30
 
 =head1 SYNOPSIS
 
@@ -251,7 +247,7 @@ The field_template method returns the complete path and filename of the
 specified template.
 
     my $input = MyApp::Validation->new(params => $params);
-    my $template = $input->stash('form_fields')->()->field_template('radio');
+    my $template = $input->form_fields->field_template('radio');
 
 =head2 render_field
 

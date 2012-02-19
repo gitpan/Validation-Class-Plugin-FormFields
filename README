@@ -3,7 +3,7 @@ NAME
     Field Renderer
 
 VERSION
-    version 0.22
+    version 0.30
 
 SYNOPSIS
         package MyApp::Validation;
@@ -93,7 +93,7 @@ METHODS
     specified template.
 
         my $input = MyApp::Validation->new(params => $params);
-        my $template = $input->stash('form_fields')->()->field_template('radio');
+        my $template = $input->form_fields->field_template('radio');
 
   render_field
     The render_field method renders an HTML block based on the specified

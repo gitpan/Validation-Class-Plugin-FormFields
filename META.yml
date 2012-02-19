@@ -17,5 +17,5 @@ requires:
   File::Copy: 0
   File::ShareDir: 0
   Template: 0
-  Validation::Class: 5.15
-version: 0.22
+  Validation::Class: 5.20
+version: 0.30

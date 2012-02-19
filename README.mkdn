@@ -4,7 +4,7 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 # VERSION
 
-version 0.22
+version 0.30
 
 # SYNOPSIS
 
@@ -112,7 +112,7 @@ The field_template method returns the complete path and filename of the
 specified template.
 
     my $input = MyApp::Validation->new(params => $params);
-    my $template = $input->stash('form_fields')->()->field_template('radio');
+    my $template = $input->form_fields->field_template('radio');
 
 ## render_field
 
