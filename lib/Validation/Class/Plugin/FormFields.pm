@@ -5,99 +5,113 @@ use warnings;
 
 package Validation::Class::Plugin::FormFields;
 {
-  $Validation::Class::Plugin::FormFields::VERSION = '0.1.0';
+  $Validation::Class::Plugin::FormFields::VERSION = '0.21';
 }
 
-use Moose::Role;
-use File::ShareDir qw/dist_dir/;
 use Template;
 use Template::Stash;
 
-our $VERSION = '0.1.0'; # VERSION
+use File::ShareDir qw/dist_dir/;
 
+our $VERSION = '0.21'; # VERSION
 
-# field element templates
-has field_templates => (
-    is      => 'rw',
-    isa     => 'HashRef',
-    lazy    => 1,
-    default => sub {{
-        text         => 'text_field.tt',
-        password     => 'password_field.tt',
-        select       => 'select_field.tt',
-        multi_select => 'select_multiple_field.tt',
-        textarea     => 'textarea_field.tt',
-        radio        => 'radio_field.tt',
-        check        => 'check_field.tt',
-        hidden       => 'hidden_field.tt',
-        file         => 'file_field.tt'
-    }}
-);
-
-# field element templates location
-has field_templates_location => (
-    is      => 'rw',
-    isa     => 'Str',
-    lazy    => 1,
-    default => sub {
-        my $dir     = '';
-        
-        my $package = __PACKAGE__;
-           $package =~ s/::/\-/g;
-           
-        eval { $dir = dist_dir($package) };
-        return $dir ? join "/", $dir, "templates" : "./templates";
-    }
-);
-
-# retreive the template for a type
-sub field_template {
-    my ($self, $type) = @_;
-    return join "/",
-        $self->field_templates_location,
-        $self->field_templates->{$type},
-}
 
 # hook into the validation classes initilization
-sub new {
-    my ($class, $self) = @_;
-    
-    # add element ddirective
 
-    #$self->directives->{element} = {
-    #    mixin => 1, # allowed in mixins
-    #    field => 1, # allowed in fields
-    #    multi => 0  # never an array
-    #};
+sub new {
     
+    my ($plugin, $caller) = @_;
+    
+    my $class = ref $caller;
+    
+    no strict 'refs';
+    
+    *{"${class}::form_fields"} = sub {
+        
+        return bless {
+            
+            # field element templates                
+            field_templates => {
+                text         => 'text_field.tt',
+                password     => 'password_field.tt',
+                select       => 'select_field.tt',
+                multi_select => 'select_multiple_field.tt',
+                textarea     => 'textarea_field.tt',
+                radio        => 'radio_field.tt',
+                check        => 'check_field.tt',
+                hidden       => 'hidden_field.tt',
+                file         => 'file_field.tt'
+            },
+            
+            # field element templates location
+            field_templates_location => do {
+                
+                my $dir     = '';
+                
+                my $package = __PACKAGE__;
+                   $package =~ s/::/\-/g;
+                
+                eval { $dir = dist_dir($package) };
+                $dir ? join "/", $dir, "templates" : "./templates";
+                
+            },
+            
+            # the calling validation class
+            validation_class => $caller
+            
+        }, $plugin;
+        
+    };
+    
+}
+
+# retreive the template for a type
+
+sub field_template {
+ 
+    my ($self, $type) = @_;
+    return join "/",
+        $self->{field_templates_location},
+        $self->{field_templates}->{$type},
+
 }
 
 # render form element template based on the field definition
+
 sub render_field {
+    
     my ($self, $field, $type, $args) = @_;
+    
     my $content   = '';
+    
     my $variables = {
-        class => $self,
-        field => $self->fields->{$field},
+        class => $self->{validation_class},
+        field => $self->{validation_class}->fields->{$field},
         this  => $field,
         vars  => $args
     };
+    
     my $template  = Template->new(
         INTERPOLATE => 1,
         EVAL_PERL   => 1,
         ABSOLUTE    => 1,
         ANYCASE     => 1
     );
+    
     $template->process($self->field_template($type), $variables, \$content);
+    
     $content =~ s/(\w)\n{2,}/$1\n/mgi;               # poor-mans tidy attempt
     $content =~ s/(\w)\s{2,}/$1\n/mgi;               # poor-mans tidy attempt
     $content =~ s/\n\s{2,}\n/\n/mg;                  # poor-mans tidy attempt
     $content =~ s/(\w)\n([^\t])/$1 \n\n    $2/mg;    # poor-mans tidy attempt
     $content =~ s/(.)\s{2,}(\w)/$1 $2/mg;            # poor-mans tidy attempt
+    
     return "$content\n";
+    
 }
 
 # define custom template virtual methods
+
 $Template::Stash::LIST_OPS->{ safe_name } = sub {
     my $name  = shift;
        $name  = "ARRAY" eq ref $name ? $name->[0] : $name;
@@ -105,6 +119,7 @@ $Template::Stash::LIST_OPS->{ safe_name } = sub {
        
     return $name;
 };
+
 $Template::Stash::LIST_OPS->{ safe_pattern } = sub {
     my $pattern  = shift;
        $pattern  = "ARRAY" eq ref $pattern ? $pattern->[0] : $pattern;
@@ -121,6 +136,7 @@ $Template::Stash::LIST_OPS->{ safe_pattern } = sub {
        
     return $pattern;
 };
+
 $Template::Stash::LIST_OPS->{ in_array } = sub {
     my $list  = shift;
     my $query = shift;
@@ -139,16 +155,20 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 =head1 VERSION
 
-version 0.1.0
+version 0.21
 
 =head1 SYNOPSIS
 
     package MyApp::Validation;
     
-    use Validation::Class; __PACKAGE__
-        ->load_plugins('FormFields');
+    use Validation::Class;
+    
+    load {
+        plugins => ['FormFields']
+    };
     
     # a validation rule
+    
     field 'login'  => {
         label      => 'User Login',
         error      => 'Login invalid.',
@@ -160,6 +180,7 @@ version 0.1.0
     };
     
     # a validation rule
+    
     field 'password'  => {
         label         => 'User Password',
         error         => 'Password invalid.',
@@ -170,12 +191,15 @@ version 0.1.0
         }
     };
     
-    # elsewhere is the application
+    # elsewhere in the application
+    
     package main ;
     
-    my $form = MyApp::Validation->new(params => $params);
+    my $input = MyApp::Validation->new(params => $params);
     
-    $form->validate('login', 'password');
+    $input->validate('login', 'password');
+    
+    my $form = $input->form_fields; # returns a V::C::P::FormFields object
     
     print $form->render_field('login', 'text');
     print $form->render_field('password', 'password');
@@ -226,8 +250,8 @@ where the field templates are stored.
 The field_template method returns the complete path and filename of the
 specified template.
 
-    my $form = MyApp::Validation->new(params => $params);
-    my $template = $form->field_template('radio');
+    my $input = MyApp::Validation->new(params => $params);
+    my $template = $input->stash('form_fields')->()->field_template('radio');
 
 =head2 render_field
 
@@ -242,8 +266,11 @@ the HTML form input fields.
 
     package MyApp::Validation;
     
-    use Validation::Class; __PACKAGE__
-        ->load_plugins('FormFields');
+    use Validation::Class;
+    
+    load {
+        -plugins => ['FormFields']
+    };
     
     field 'login'  => {
         label      => 'User Login',
@@ -272,9 +299,11 @@ the HTML form input fields.
     };
     
     # elsewhere is the application
+    
     package main ;
     
-    my $form = MyApp::Validation->new(params => $params);
+    my $input = MyApp::Validation->new(params => $params);
+    my $form  = $input->form_fields;
     
     my $user_field  = $form->render_field('login', 'text');
     my $pass_field  = $form->render_field('password', 'password');
@@ -405,13 +434,13 @@ The actual template files are embedded in this distribution however you may copy
 them to your current working directory by issuing the following command at the
 command-line:
 
-    $ Validation-Class-Plugin-FormField-Templates.pl [<path>]
+    $ vcformfields [<path>]
 
 Once copied and modified to your liking, specify the current working directory
 in your validation class instance as follows:
 
     my $form = MyVal::Validation->new;
-    $form->field_templates_location($location);
+       $form->field_templates_location($location);
 
 =head1 AUTHOR
 

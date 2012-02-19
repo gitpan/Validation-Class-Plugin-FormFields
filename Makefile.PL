@@ -20,7 +20,7 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "Validation-Class-Plugin-FormFields",
   "EXE_FILES" => [
-    "bin/Validation-Class-Plugin-FormField-Templates.pl"
+    "bin/vcformfields"
   ],
   "LICENSE" => "perl",
   "NAME" => "Validation::Class::Plugin::FormFields",
@@ -28,9 +28,9 @@ my %WriteMakefileArgs = (
     "File::Copy" => 0,
     "File::ShareDir" => 0,
     "Template" => 0,
-    "Validation::Class" => "2.4.5"
+    "Validation::Class" => "5.15"
   },
-  "VERSION" => "0.1.0",
+  "VERSION" => "0.21",
   "test" => {
     "TESTS" => "t/*.t"
   }

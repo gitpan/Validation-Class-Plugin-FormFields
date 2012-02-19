@@ -3,15 +3,19 @@ NAME
     Field Renderer
 
 VERSION
-    version 0.1.0
+    version 0.21
 
 SYNOPSIS
         package MyApp::Validation;
-        
-    use Validation::Class; __PACKAGE__
-            ->load_plugins('FormFields');
-        
-    # a validation rule
+    
+        use Validation::Class;
+    
+        load {
+            plugins => ['FormFields']
+        };
+    
+        # a validation rule
+    
         field 'login'  => {
             label      => 'User Login',
             error      => 'Login invalid.',
@@ -21,8 +25,9 @@ SYNOPSIS
                 return $this_field->{value} eq 'admin' ? 1 : 0;
             }
         };
-        
-    # a validation rule
+    
+        # a validation rule
+    
         field 'password'  => {
             label         => 'User Password',
             error         => 'Password invalid.',
@@ -32,15 +37,18 @@ SYNOPSIS
                 return $this_field->{value} eq 'pass' ? 1 : 0;
             }
         };
-        
-    # elsewhere is the application
+    
+        # elsewhere in the application
+    
         package main ;
-        
-    my $form = MyApp::Validation->new(params => $params);
-        
-    $form->validate('login', 'password');
-        
-    print $form->render_field('login', 'text');
+    
+        my $input = MyApp::Validation->new(params => $params);
+    
+        $input->validate('login', 'password');
+    
+        my $form = $input->form_fields; # returns a V::C::P::FormFields object
+    
+        print $form->render_field('login', 'text');
         print $form->render_field('password', 'password');
 
 DESCRIPTION
@@ -84,8 +92,8 @@ METHODS
     The field_template method returns the complete path and filename of the
     specified template.
 
-        my $form = MyApp::Validation->new(params => $params);
-        my $template = $form->field_template('radio');
+        my $input = MyApp::Validation->new(params => $params);
+        my $template = $input->stash('form_fields')->()->field_template('radio');
 
   render_field
     The render_field method renders an HTML block based on the specified
@@ -98,11 +106,14 @@ METHODS
     which wraps the HTML form input fields.
 
         package MyApp::Validation;
-        
-    use Validation::Class; __PACKAGE__
-            ->load_plugins('FormFields');
-        
-    field 'login'  => {
+    
+        use Validation::Class;
+    
+        load {
+            -plugins => ['FormFields']
+        };
+    
+        field 'login'  => {
             label      => 'User Login',
             error      => 'Login invalid.',
             required   => 1,
@@ -111,8 +122,8 @@ METHODS
                 return $this_field->{value} eq 'admin' ? 1 : 0;
             }
         };
-        
-    field 'password'  => {
+    
+        field 'password'  => {
             label         => 'User Password',
             error         => 'Password invalid.',
             required      => 1,
@@ -121,22 +132,24 @@ METHODS
                 return $this_field->{value} eq 'pass' ? 1 : 0;
             }
         };
-        
-    field 'remember'  => {
+    
+        field 'remember'  => {
             label         => 'Remember Authentication',
             error         => 'Remember authentication invalid.',
             options       => 'Yes, No'
         };
-        
-    # elsewhere is the application
+    
+        # elsewhere is the application
+    
         package main ;
-        
-    my $form = MyApp::Validation->new(params => $params);
-        
-    my $user_field  = $form->render_field('login', 'text');
+    
+        my $input = MyApp::Validation->new(params => $params);
+        my $form  = $input->form_fields;
+    
+        my $user_field  = $form->render_field('login', 'text');
         my $pass_field  = $form->render_field('password', 'password');
-        
-    my $remember_me = $form->render_field('remember', 'check', {
+    
+        my $remember_me = $form->render_field('remember', 'check', {
             select  => 'Yes',
             options => [
                 { text => 'Yes', value => 'Yes' },
@@ -235,11 +248,11 @@ METHODS
 
         # renders an email textbox
         my $email = $form->render_field($field, 'text', { type => 'email' });
-        
-    # renders a url textbox
+    
+        # renders a url textbox
         my $website = $form->render_field($field, 'text', { type => 'url' });
-        
-    ...
+    
+        ...
 
    textarea
     The textarea option instructs the render_field method to produce a
@@ -254,13 +267,13 @@ HTML FORM FIELD TEMPLATES
     however you may copy them to your current working directory by issuing
     the following command at the command-line:
 
-        $ Validation-Class-Plugin-FormField-Templates.pl [<path>]
+        $ vcformfields [<path>]
 
     Once copied and modified to your liking, specify the current working
     directory in your validation class instance as follows:
 
         my $form = MyVal::Validation->new;
-        $form->field_templates_location($location);
+           $form->field_templates_location($location);
 
 AUTHOR
     Al Newkirk <awncorp@cpan.org>

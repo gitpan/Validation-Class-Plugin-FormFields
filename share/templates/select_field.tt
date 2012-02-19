@@ -19,5 +19,5 @@
         [% END %]
     [% END %]
     </select>
-    [% IF class.error(field.name).size() %]<span class="errors">[% class.error(field.name).join(', ') %]</span>[% END %]
+    [% IF class.get_errors(field.name).size() %]<span class="errors">[% class.get_errors(field.name).join(', ') %]</span>[% END %]
 </div>

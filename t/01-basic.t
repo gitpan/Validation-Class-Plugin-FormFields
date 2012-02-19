@@ -2,30 +2,33 @@ use Test::More tests => 47;
 
 package MyVal;
 
-use Validation::Class; __PACKAGE__
-    ->load_plugins('FormFields');
+use Validation::Class;
 
-    # a validation rule
-    field 'login'  => {
-        label      => 'User Login',
-        error      => 'Login invalid.',
-        required   => 1,
-        validation => sub {
-            my ($self, $this_field, $all_params) = @_;
-            return $this_field->{value} eq 'admin' ? 1 : 0;
-        }
-    };
-    
-    # a validation rule
-    field 'password'  => {
-        label         => 'User Password',
-        error         => 'Password invalid.',
-        required      => 1,
-        validation    => sub {
-            my ($self, $this_field, $all_params) = @_;
-            return $this_field->{value} eq 'pass' ? 1 : 0;
-        }
-    };
+load {
+    plugins => ['FormFields']
+};
+
+# a validation rule
+field 'login'  => {
+    label      => 'User Login',
+    error      => 'Login invalid.',
+    required   => 1,
+    validation => sub {
+        my ($self, $this_field, $all_params) = @_;
+        return $this_field->{value} eq 'admin' ? 1 : 0;
+    }
+};
+
+# a validation rule
+field 'password'  => {
+    label         => 'User Password',
+    error         => 'Password invalid.',
+    required      => 1,
+    validation    => sub {
+        my ($self, $this_field, $all_params) = @_;
+        return $this_field->{value} eq 'pass' ? 1 : 0;
+    }
+};
     
 package main ;
 
@@ -42,9 +45,13 @@ sub has($;$) {
     return $html =~ /$string/m;
 }
 
-my $tmps = $FindBin::Bin . "/../share/templates";
-my $form = MyVal->new(param => {  }); $form->field_templates_location($tmps);
-my $html = '';
+my $tmps  = $FindBin::Bin . "/../share/templates";
+my $input = MyVal->new(param => {});
+
+my $form  = $input->form_fields;
+   $form->{field_templates_location} = $tmps;
+
+my $html  = '';
    
    $html = $form->render_field('login', 'text');
    diag 'processing the login field';
@@ -54,7 +61,7 @@ ok 'login rendered label', has $html, '<label for="login">';
 ok 'login did not render an error', ! has $html, '<span class="errors">';
 ok 'login rendered input:text', has $html, 'type="text"';
 
-   $form->validate('login');
+   $input->validate('login');
    $html = $form->render_field('login', 'text');
    diag 'validated the login field';
 
@@ -72,7 +79,7 @@ ok 'password rendered label', has $html, '<label for="password">';
 ok 'password did not render an error', ! has $html, '<span class="errors">';
 ok 'password rendered input:text', has $html, 'type="text"';
 
-   $form->validate('password');
+   $input->validate('password');
    $html = $form->render_field('password', 'text');
    diag 'validated the password field';
 
@@ -82,7 +89,7 @@ ok 'password rendered errors', has $html, '<span class="errors">';
 ok 'password errors consistent', has $html, '<span class="errors">Password invalid.';
 ok 'password rendered input:text', has $html, 'type="text"';
 
-   $form->validate('login', 'password');
+   $input->validate('login', 'password');
    $html = join "\n",
         $form->render_field('login', 'text'),
         $form->render_field('password', 'text')
@@ -100,8 +107,8 @@ ok 'password rendered errors', has $html, '<span class="errors">';
 ok 'password errors consistent', has $html, '<span class="errors">Password invalid.';
 ok 'password rendered input:text', has $html, 'type="text"';
 
-   $form->params->{login} = 'admin';
-   $form->validate('login', 'password');
+   $input->params->{login} = 'admin';
+   $input->validate('login', 'password');
    $html = join "\n",
         $form->render_field('login', 'text'),
         $form->render_field('password', 'text')
@@ -118,8 +125,8 @@ ok 'password rendered errors', has $html, '<span class="errors">';
 ok 'password errors consistent', has $html, '<span class="errors">Password invalid.';
 ok 'password rendered input:text', has $html, 'type="text"';
 
-   $form->params->{login} = 'wrong';
-   $form->validate('login', 'password');
+   $input->params->{login} = 'wrong';
+   $input->validate('login', 'password');
    $html = join "\n",
         $form->render_field('login', 'text'),
         $form->render_field('password', 'text')
@@ -136,4 +143,3 @@ ok 'password rendered label', has $html, '<label for="password">';
 ok 'password rendered errors', has $html, '<span class="errors">';
 ok 'password errors consistent', has $html, '<span class="errors">Password invalid.';
 ok 'password rendered input:text', has $html, 'type="text"';
-

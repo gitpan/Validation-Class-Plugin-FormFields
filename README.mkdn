@@ -4,18 +4,24 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 # VERSION
 
-version 0.1.0
+version 0.21
 
 # SYNOPSIS
 
     package MyApp::Validation;
     
 
-    use Validation::Class; __PACKAGE__
-        ->load_plugins('FormFields');
+    use Validation::Class;
+    
+
+    load {
+        plugins => ['FormFields']
+    };
     
 
     # a validation rule
+    
+
     field 'login'  => {
         label      => 'User Login',
         error      => 'Login invalid.',
@@ -28,6 +34,8 @@ version 0.1.0
     
 
     # a validation rule
+    
+
     field 'password'  => {
         label         => 'User Password',
         error         => 'Password invalid.',
@@ -39,14 +47,19 @@ version 0.1.0
     };
     
 
-    # elsewhere is the application
+    # elsewhere in the application
+    
+
     package main ;
     
 
-    my $form = MyApp::Validation->new(params => $params);
+    my $input = MyApp::Validation->new(params => $params);
     
 
-    $form->validate('login', 'password');
+    $input->validate('login', 'password');
+    
+
+    my $form = $input->form_fields; # returns a V::C::P::FormFields object
     
 
     print $form->render_field('login', 'text');
@@ -98,8 +111,8 @@ where the field templates are stored.
 The field_template method returns the complete path and filename of the
 specified template.
 
-    my $form = MyApp::Validation->new(params => $params);
-    my $template = $form->field_template('radio');
+    my $input = MyApp::Validation->new(params => $params);
+    my $template = $input->stash('form_fields')->()->field_template('radio');
 
 ## render_field
 
@@ -115,8 +128,12 @@ the HTML form input fields.
     package MyApp::Validation;
     
 
-    use Validation::Class; __PACKAGE__
-        ->load_plugins('FormFields');
+    use Validation::Class;
+    
+
+    load {
+        -plugins => ['FormFields']
+    };
     
 
     field 'login'  => {
@@ -149,10 +166,13 @@ the HTML form input fields.
     
 
     # elsewhere is the application
+    
+
     package main ;
     
 
-    my $form = MyApp::Validation->new(params => $params);
+    my $input = MyApp::Validation->new(params => $params);
+    my $form  = $input->form_fields;
     
 
     my $user_field  = $form->render_field('login', 'text');
@@ -287,13 +307,13 @@ The actual template files are embedded in this distribution however you may copy
 them to your current working directory by issuing the following command at the
 command-line:
 
-    $ Validation-Class-Plugin-FormField-Templates.pl [<path>]
+    $ vcformfields [<path>]
 
 Once copied and modified to your liking, specify the current working directory
 in your validation class instance as follows:
 
     my $form = MyVal::Validation->new;
-    $form->field_templates_location($location);
+       $form->field_templates_location($location);
 
 # AUTHOR
 
