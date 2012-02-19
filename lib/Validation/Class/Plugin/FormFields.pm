@@ -5,7 +5,7 @@ use warnings;
 
 package Validation::Class::Plugin::FormFields;
 {
-  $Validation::Class::Plugin::FormFields::VERSION = '0.21';
+  $Validation::Class::Plugin::FormFields::VERSION = '0.22';
 }
 
 use Template;
@@ -13,7 +13,7 @@ use Template::Stash;
 
 use File::ShareDir qw/dist_dir/;
 
-our $VERSION = '0.21'; # VERSION
+our $VERSION = '0.22'; # VERSION
 
 
 # hook into the validation classes initilization
@@ -155,7 +155,7 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 =head1 VERSION
 
-version 0.21
+version 0.22
 
 =head1 SYNOPSIS
 
@@ -269,7 +269,7 @@ the HTML form input fields.
     use Validation::Class;
     
     load {
-        -plugins => ['FormFields']
+        plugins => ['FormFields']
     };
     
     field 'login'  => {
@@ -439,7 +439,7 @@ command-line:
 Once copied and modified to your liking, specify the current working directory
 in your validation class instance as follows:
 
-    my $form = MyVal::Validation->new;
+    my $form = MyVal::Validation->new->form_fields;
        $form->field_templates_location($location);
 
 =head1 AUTHOR

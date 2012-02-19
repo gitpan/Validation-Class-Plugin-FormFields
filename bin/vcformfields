@@ -7,21 +7,25 @@ use strict;
 
 package MyVal;
 {
-  $MyVal::VERSION = '0.21';
-} use Validation::Class; __PACKAGE__->load_plugins('FormFields');
+  $MyVal::VERSION = '0.22';
+} use Validation::Class;
+
+load {
+    plugins => 'FormFields'
+};
 
 package main ;
 {
-  $main::VERSION = '0.21';
+  $main::VERSION = '0.22';
 }
 
 use File::Copy;
 
 # copy templates to the cwd
 
-my  $class = MyVal->new;
+my  $class = MyVal->new->form_fields;
 
-    foreach my $type (keys %{ $class->field_templates }) {
+    foreach my $type (keys %{ $class->{field_templates} }) {
         
         my  $target = $ARGV[0];
             $target =~ s/\/$//g if $target;
@@ -29,7 +33,7 @@ my  $class = MyVal->new;
         
         my  @tofrom = (
             $class->field_template($type),
-            "$target/" . $class->field_templates->{$type}
+            "$target/" . $class->{field_templates}->{$type}
         );
         
         print join "\n", "copying ... ", $tofrom[0], "to ... ", $tofrom[1], "\n";

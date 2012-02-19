@@ -3,7 +3,7 @@ NAME
     Field Renderer
 
 VERSION
-    version 0.21
+    version 0.22
 
 SYNOPSIS
         package MyApp::Validation;
@@ -110,7 +110,7 @@ METHODS
         use Validation::Class;
     
         load {
-            -plugins => ['FormFields']
+            plugins => ['FormFields']
         };
     
         field 'login'  => {
@@ -272,7 +272,7 @@ HTML FORM FIELD TEMPLATES
     Once copied and modified to your liking, specify the current working
     directory in your validation class instance as follows:
 
-        my $form = MyVal::Validation->new;
+        my $form = MyVal::Validation->new->form_fields;
            $form->field_templates_location($location);
 
 AUTHOR

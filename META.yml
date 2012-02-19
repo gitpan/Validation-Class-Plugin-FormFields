@@ -18,4 +18,4 @@ requires:
   File::ShareDir: 0
   Template: 0
   Validation::Class: 5.15
-version: 0.21
+version: 0.22
