@@ -30,7 +30,7 @@ my %WriteMakefileArgs = (
     "Template" => 0,
     "Validation::Class" => "5.20"
   },
-  "VERSION" => "0.30",
+  "VERSION" => "0.31",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -55,8 +55,10 @@ delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
 
 WriteMakefile(%WriteMakefileArgs);
 
+{
 package
 MY;
 use File::ShareDir::Install qw(postamble);
+}
 
 

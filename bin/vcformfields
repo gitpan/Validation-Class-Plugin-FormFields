@@ -7,16 +7,16 @@ use strict;
 
 package MyVal;
 {
-  $MyVal::VERSION = '0.30';
+  $MyVal::VERSION = '0.31';
 } use Validation::Class;
 
-load {
-    plugins => 'FormFields'
+set {
+    plugins => ['FormFields']
 };
 
 package main ;
 {
-  $main::VERSION = '0.30';
+  $main::VERSION = '0.31';
 }
 
 use File::Copy;

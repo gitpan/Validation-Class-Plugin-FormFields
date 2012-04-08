@@ -5,7 +5,7 @@ use warnings;
 
 package Validation::Class::Plugin::FormFields;
 {
-  $Validation::Class::Plugin::FormFields::VERSION = '0.30';
+  $Validation::Class::Plugin::FormFields::VERSION = '0.31';
 }
 
 use Template;
@@ -13,7 +13,7 @@ use Template::Stash;
 
 use File::ShareDir qw/dist_dir/;
 
-our $VERSION = '0.30'; # VERSION
+our $VERSION = '0.31'; # VERSION
 
 
 # hook into the validation classes initilization
@@ -151,7 +151,7 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 =head1 VERSION
 
-version 0.30
+version 0.31
 
 =head1 SYNOPSIS
 
