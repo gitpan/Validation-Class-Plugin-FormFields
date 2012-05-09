@@ -5,7 +5,7 @@ use warnings;
 
 package Validation::Class::Plugin::FormFields;
 {
-  $Validation::Class::Plugin::FormFields::VERSION = '0.31';
+  $Validation::Class::Plugin::FormFields::VERSION = '0.32';
 }
 
 use Template;
@@ -13,7 +13,7 @@ use Template::Stash;
 
 use File::ShareDir qw/dist_dir/;
 
-our $VERSION = '0.31'; # VERSION
+our $VERSION = '0.32'; # VERSION
 
 
 # hook into the validation classes initilization
@@ -57,7 +57,7 @@ sub new {
             
         }, $plugin;
         
-    } );
+    } ) unless $caller->can('form_fields');
     
 }
 
@@ -151,7 +151,7 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 =head1 VERSION
 
-version 0.31
+version 0.32
 
 =head1 SYNOPSIS
 

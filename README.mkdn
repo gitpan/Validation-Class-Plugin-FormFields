@@ -4,7 +4,7 @@ Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Render
 
 # VERSION
 
-version 0.31
+version 0.32
 
 # SYNOPSIS
 
