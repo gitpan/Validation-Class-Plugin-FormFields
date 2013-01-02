@@ -1,5 +1,0 @@
-<div class="form-field textarea">
-    <label for="[% field.name.safe_name() %]">[% IF field.label %][% field.label %][% ELSE %][% field.name.safe_name() %][% END %][% IF field.required %] <em>*</em>[% END %]</label>
-    <textarea id="[% field.name.safe_name() %]" name="[% field.name.safe_name() %]" class="[% field.name.safe_name() %]-control [% field.name.safe_name() %]">[% form.params.$this || field.value %]</textarea>
-    [% IF class.get_errors(field.name).size() %]<span class="errors">[% class.get_errors(field.name).join(', ') %]</span>[% END %]
-</div>

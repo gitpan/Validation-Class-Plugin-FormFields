@@ -1,25 +1,5 @@
-This file documents the revision history for the Perl library Validation::Class::Plugin::FormFields.
+Revision history for the Perl library Validation::Class::Plugin::FormFields
 
-0.31    2012-04-08
-        - Fixed bug in executable (not copying templates)
+0.33  2013-01-02
 
-0.30    2012-02-19
-        - Modified to suit the new Validation::Class API
-
-0.1.0   2011-10-31
-        - Updated POD
-        - Renders HTML5 form fields
-
-0.0.7   2011-10-31
-        - Updated POD
-        - Added missing variable to template renderer
-
-0.0.6   2011-10-31
-        - Updated POD
-
-0.0.5   2011-10-31
-        - Updated POD
-        - Add script to copy template to the CWD
-
-0.0.1   2011-10-29
-        - (Alpha Release) Proof of concept
+  - released complete rewrite (untested)

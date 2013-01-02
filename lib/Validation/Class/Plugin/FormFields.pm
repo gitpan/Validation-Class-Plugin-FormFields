@@ -1,450 +1,546 @@
-# ABSTRACT: Validation::Class HTML Form Field Renderer
+# ABSTRACT: HTML Form Field Renderer for Validation::Class
+
+package Validation::Class::Plugin::FormFields;
 
 use strict;
 use warnings;
+use overload '""' => \&render, fallback => 1;
 
-package Validation::Class::Plugin::FormFields;
-{
-  $Validation::Class::Plugin::FormFields::VERSION = '0.32';
-}
+use Carp;
 
-use Template;
-use Template::Stash;
+use Validation::Class::Util;
+use HTML::Element;
 
-use File::ShareDir qw/dist_dir/;
+our $VERSION = '0.33'; # VERSION
 
-our $VERSION = '0.32'; # VERSION
-
-
-# hook into the validation classes initilization
 
 sub new {
-    
-    my ($plugin, $caller) = @_;
-    
-    $caller->set_method( form_fields => sub {
-        
-        return bless {
-            
-            # field element templates                
-            field_templates => {
-                text         => 'text_field.tt',
-                password     => 'password_field.tt',
-                select       => 'select_field.tt',
-                multi_select => 'select_multiple_field.tt',
-                textarea     => 'textarea_field.tt',
-                radio        => 'radio_field.tt',
-                check        => 'check_field.tt',
-                hidden       => 'hidden_field.tt',
-                file         => 'file_field.tt'
-            },
-            
-            # field element templates location
-            field_templates_location => do {
-                
-                my $dir     = '';
-                
-                my $package = __PACKAGE__;
-                   $package =~ s/::/\-/g;
-                
-                eval { $dir = dist_dir($package) };
-                $dir ? join "/", $dir, "templates" : "./templates";
-                
-            },
-            
-            # the calling validation class
-            validation_class => $caller
-            
-        }, $plugin;
-        
-    } ) unless $caller->can('form_fields');
-    
-}
 
-# retreive the template for a type
+    my $class     = shift;
+    my $prototype = shift;
 
-sub field_template {
- 
-    my ($self, $type) = @_;
-    return join "/",
-        $self->{field_templates_location},
-        $self->{field_templates}->{$type},
-
-}
-
-# render form element template based on the field definition
-
-sub render_field {
-    
-    my ($self, $field, $type, $args) = @_;
-    
-    my $content   = '';
-    
-    my $variables = {
-        class => $self->{validation_class},
-        field => $self->{validation_class}->fields->{$field},
-        this  => $field,
-        vars  => $args
+    my $self = {
+        target    => '',
+        elements  => {},
+        prototype => $prototype
     };
-    
-    my $template  = Template->new(
-        INTERPOLATE => 1,
-        EVAL_PERL   => 1,
-        ABSOLUTE    => 1,
-        ANYCASE     => 1
-    );
-    
-    $template->process($self->field_template($type), $variables, \$content);
-    
-    $content =~ s/(\w)\n{2,}/$1\n/mgi;               # poor-mans tidy attempt
-    $content =~ s/(\w)\s{2,}/$1\n/mgi;               # poor-mans tidy attempt
-    $content =~ s/\n\s{2,}\n/\n/mg;                  # poor-mans tidy attempt
-    $content =~ s/(\w)\n([^\t])/$1 \n\n    $2/mg;    # poor-mans tidy attempt
-    $content =~ s/(.)\s{2,}(\w)/$1 $2/mg;            # poor-mans tidy attempt
-    
-    return "$content\n";
-    
+
+    return bless $self, $class;
+
 }
 
-# define custom template virtual methods
+sub checkbox {
 
-$Template::Stash::LIST_OPS->{ safe_name } = sub {
-    my $name  = shift;
-       $name  = "ARRAY" eq ref $name ? $name->[0] : $name;
-       $name  =~ s/[^a-zA-Z0-9\-\_]/\-/g;
-       
-    return $name;
-};
+    my ($self, $name, %attributes) = @_;
 
-$Template::Stash::LIST_OPS->{ safe_pattern } = sub {
-    my $pattern  = shift;
-       $pattern  = "ARRAY" eq ref $pattern ? $pattern->[0] : $pattern;
-       
-        unless ("Regexp" eq ref $pattern) {
-            $pattern =~ s/([^#X ])/\\$1/g;
-            $pattern =~ s/#/\\d/g;
-            $pattern =~ s/X/[a-zA-Z]/g;
-            $pattern = qr/$pattern/;
+    $self->{target} = $name;
+
+    $attributes{type} ||= 'check';
+
+    $self->declare('checkbox', $name, %attributes);
+
+    return $self;
+
+}
+
+sub checkgroup {
+
+    my ($self, $name, %attributes) = @_;
+
+    $self->{target} = $name;
+
+    $attributes{type} = 'check';
+
+    $self->declare('checkgroup', $name, %attributes);
+
+    return $self;
+
+}
+
+sub declare {
+
+    my ($self, $method, $name, %attributes) = @_;
+
+    my $proto = $self->{prototype};
+
+    exit croak q(Can't declare new element without a field and type),
+        unless $name && $method
+    ;
+
+    exit croak sprintf q(Can't locate field "%s" for use with element "%s"),
+        $name, $method unless $proto->fields->has($name)
+    ;
+
+    my $field   = $proto->fields->get($name);
+
+    $attributes{id}   ||= $field->name;
+    $attributes{name} ||= $field->name;
+
+    # handle value conditions
+    my $value;
+
+    if (defined $attributes{value}) {
+        $value = $attributes{value};
+    }
+
+    elsif ($proto->params->has($name)) {
+        $value = $proto->params->get($name);
+    }
+
+    else {
+        $value = $field->value || $field->default;
+    }
+
+    my $processor = "_declare_$method";
+
+    $self->$processor($field, $value, %attributes) if $self->can($processor);
+
+    return $self;
+
+}
+
+sub _declare_checkbox {
+
+    my ($self, $field, $value, %attributes) = @_;
+
+    my $name = $field->name;
+
+    my $element = HTML::Element->new('input');
+
+    # set value attribute
+    $value = isa_arrayref($value) ? $value->[0] : $value;
+    $attributes{value} = $value;
+
+    # set basic attributes
+    while (my($key, $val) = each(%attributes)) {
+        $element->attr($key, $val);
+    }
+
+    return $self->{elements}->{$name} = $element;
+
+}
+
+sub _declare_checkgroup {
+
+    my ($self, $field, $value, %attributes) = @_;
+
+    my $name = $field->name;
+
+    my @elements = ();
+
+    # set value attribute
+    $value = isa_arrayref($value) ? $value->[0] : $value;
+    $attributes{value} = $value;
+
+    my @opts = grep defined, @{$field->options};
+    my %vals = ();
+
+    %vals = map {$_=>$_} isa_arrayref($value) ? @{$value}:($value) if $value;
+
+    foreach my $opt (@opts) {
+
+        my ($v, $c);
+
+        if ($opt =~ /^([^\|]+)?\|(.*)/) {
+            ($v, $c) = $opt =~ /^([^\|]+)?\|(.*)/;
         }
-        
-        # now for the nasty part
-        ($pattern) = $pattern =~ /\(\?\-xism\:(.*)\)/;
-       
-    return $pattern;
-};
+        elsif (isa_arrayref($opt)) {
+            ($v, $c) = @{$opt};
+        }
+        else {
+            ($v, $c) = ($opt, $opt);
+        }
 
-$Template::Stash::LIST_OPS->{ in_array } = sub {
-    my $list  = shift;
-    my $query = shift;
-       $list = "ARRAY" eq ref $list ? $list : [$list];
-    return (grep { $_ eq $query } @$list) ? 1 : 0;
-};
+        my $element = HTML::Element->new('input');
 
+        # set basic attributes
+        while (my($key, $val) = each(%attributes)) {
+            $element->attr($key, $val);
+        }
+
+        $element->attr(value => $v);
+        $element->push_content(HTML::Element->new('span', _content => [$c]));
+        $element->attr(checked => 'checked') if defined $vals{$v};
+
+        push @elements, $element;
+
+    }
+
+    return $self->{elements}->{$name} = \@elements;
+
+}
+
+sub _declare_hidden {
+
+    my ($self, $field, $value, %attributes) = @_;
+
+    my $name = $field->name;
+
+    my $element = HTML::Element->new('input');
+
+    # set value attribute
+    $value = isa_arrayref($value) ? $value->[0] : $value;
+    $attributes{value} = $value;
+
+    # set basic attributes
+    while (my($key, $val) = each(%attributes)) {
+        $element->attr($key, $val);
+    }
+
+    return $self->{elements}->{$name} = $element;
+
+}
+
+sub _declare_selectbox {
+
+    my ($self, $field, $value, %attributes) = @_;
+
+    my $name = $field->name;
+
+    my $element = HTML::Element->new('select');
+
+    # set basic attributes
+    while (my($key, $val) = each(%attributes)) {
+        $element->attr($key, $val);
+    }
+
+    # set value attribute
+    $value = isa_arrayref($value) ? $value->[0] : $value;
+    $attributes{value} = $value;
+
+    my @opts = grep defined, @{$field->options};
+    my %vals = ();
+
+    %vals = map {$_=>$_} isa_arrayref($value) ? @{$value}:($value) if $value;
+
+    foreach my $opt (@opts) {
+
+        my ($v, $c);
+
+        if ($opt =~ /^([^\|]+)?\|(.*)/) {
+            ($v, $c) = $opt =~ /^([^\|]+)?\|(.*)/;
+        }
+        elsif (isa_arrayref($opt)) {
+            ($v, $c) = @{$opt};
+        }
+        else {
+            ($v, $c) = ($opt, $opt);
+        }
+
+        my $option = HTML::Element->new('option');
+
+        $option->attr(value => $v);
+        $option->push_content($c);
+        $option->attr(selected => 'selected') if defined $vals{$v};
+
+        $element->push_content($option);
+
+    }
+
+    return $self->{elements}->{$name} = $element;
+
+}
+
+sub _declare_radiogroup {
+
+    my ($self, $field, $value, %attributes) = @_;
+
+    my $name = $field->name;
+
+    my @elements = ();
+
+    # set value attribute
+    $value = isa_arrayref($value) ? $value->[0] : $value;
+    $attributes{value} = $value;
+
+    my @opts = grep defined, @{$field->options};
+    my %vals = ();
+
+    %vals = map {$_=>$_} isa_arrayref($value) ? @{$value}:($value) if $value;
+
+    foreach my $opt (@opts) {
+
+        my ($v, $c);
+
+        if ($opt =~ /^([^\|]+)?\|(.*)/) {
+            ($v, $c) = $opt =~ /^([^\|]+)?\|(.*)/;
+        }
+        elsif (isa_arrayref($opt)) {
+            ($v, $c) = @{$opt};
+        }
+        else {
+            ($v, $c) = ($opt, $opt);
+        }
+
+        my $element = HTML::Element->new('input');
+
+        # set basic attributes
+        while (my($key, $val) = each(%attributes)) {
+            $element->attr($key, $val);
+        }
+
+        $element->attr(value => $v);
+        $element->push_content(HTML::Element->new('span', _content => [$c]));
+        $element->attr(checked => 'checked') if defined $vals{$v};
+
+        push @elements, $element;
+
+    }
+
+    return $self->{elements}->{$name} = \@elements;
+
+}
+
+sub _declare_textarea {
+
+    my ($self, $field, $value, %attributes) = @_;
+
+    my $name = $field->name;
+
+    my $element = HTML::Element->new('textarea');
+
+    # set value attribute
+    $value = isa_arrayref($value) ? $value->[0] : $value;
+    $element->push_content($value);
+
+    # set basic attributes
+    while (my($key, $val) = each(%attributes)) {
+        $element->attr($key, $val);
+    }
+
+    return $self->{elements}->{$name} = $element;
+
+}
+
+sub _declare_textbox {
+
+    my ($self, $field, $value, %attributes) = @_;
+
+    my $name = $field->name;
+
+    my $element = HTML::Element->new('input');
+
+    # set value attribute
+    $value = isa_arrayref($value) ? $value->[0] : $value;
+    $attributes{value} = $value;
+
+    # set basic attributes
+    while (my($key, $val) = each(%attributes)) {
+        $element->attr($key, $val);
+    }
+
+    return $self->{elements}->{$name} = $element;
+
+}
+
+sub element {
+
+    my ($self) = @_;
+
+    return $self->{elements}->{$self->{target}};
+
+}
+
+sub hidden {
+
+    my ($self, $name, %attributes) = @_;
+
+    $self->{target} = $name;
+
+    $attributes{type} ||= 'hidden';
+
+    $self->declare('hidden', $name, %attributes);
+
+    return $self;
+
+}
+
+sub multiselect {
+
+    my ($self, $name, %attributes) = @_;
+
+    $self->{target} = $name;
+
+    $attributes{multiple} = 'yes';
+
+    $self->selectbox($name, %attributes);
+
+    return $self;
+
+}
+
+sub password {
+
+    my ($self, $name, %attributes) = @_;
+
+    $attributes{type} = 'password';
+
+    $self->textbox($name, %attributes);
+
+    return $self;
+
+}
+
+sub radiogroup {
+
+    my ($self, $name, %attributes) = @_;
+
+    $self->{target} = $name;
+
+    $attributes{type} = 'radio';
+
+    $self->declare('radiogroup', $name, %attributes);
+
+    return $self;
+
+}
+
+sub selectbox {
+
+    my ($self, $name, %attributes) = @_;
+
+    $self->{target} = $name;
+
+    $self->declare('selectbox', $name, %attributes);
+
+    return $self;
+
+}
+
+sub textarea {
+
+    my ($self, $name, %attributes) = @_;
+
+    $self->{target} = $name;
+
+    $self->declare('textarea', $name, %attributes);
+
+    return $self;
+
+}
+
+sub textbox {
+
+    my ($self, $name, %attributes) = @_;
+
+    $self->{target} = $name;
+
+    $attributes{type} ||= 'text';
+
+    $self->declare('textbox', $name, %attributes);
+
+    return $self;
+
+}
+
+sub render {
+
+    my ($self)  = @_;
+
+    my $element = $self->element;
+
+    return isa_arrayref($element) ?
+        join "\n", map { $_->as_HTML } @{$element} :
+        $element->as_HTML
+    ;
+
+}
+
+sub render_inner {
+
+    my ($self)  = @_;
+
+    my @pairs;
+    my %attrs = $self->element->all_attr;
+
+    my $type = delete $attrs{_tag};
+
+    for (keys %attrs) {
+        delete $attrs{$_} if /^_/;
+    }
+
+    my @attrs = %attrs;
+
+    push @pairs, sprintf('%s="%s"', splice(@attrs, 0, 2)) while @attrs;
+
+    return $type . ' ' . join ' ', @pairs;
+
+}
 
 1;
+
 __END__
 =pod
 
 =head1 NAME
 
-Validation::Class::Plugin::FormFields - Validation::Class HTML Form Field Renderer
+Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation::Class
 
 =head1 VERSION
 
-version 0.32
+version 0.33
 
 =head1 SYNOPSIS
 
-    package MyApp::Validation;
-    
-    use Validation::Class;
-    
-    load {
-        plugins => ['FormFields']
-    };
-    
-    # a validation rule
-    
-    field 'login'  => {
-        label      => 'User Login',
-        error      => 'Login invalid.',
-        required   => 1,
-        validation => sub {
-            my ($self, $this_field, $all_params) = @_;
-            return $this_field->{value} eq 'admin' ? 1 : 0;
+    # THIS PLUGIN IS UNTESTED AND MAY BE SUBJECT TO DESIGN CHANGES!!!
+
+    use Validation::Class::Simple;
+
+    my $rules = Validation::Class::Simple->new(
+        fields => {
+            username    => { required => 1 },
+            password    => { required => 1 },
+            remember_me => { required => 1, options => ['1|Remember Me?'] }
         }
-    };
-    
-    # a validation rule
-    
-    field 'password'  => {
-        label         => 'User Password',
-        error         => 'Password invalid.',
-        required      => 1,
-        validation    => sub {
-            my ($self, $this_field, $all_params) = @_;
-            return $this_field->{value} eq 'pass' ? 1 : 0;
-        }
-    };
-    
-    # elsewhere in the application
-    
-    package main ;
-    
-    my $input = MyApp::Validation->new(params => $params);
-    
-    $input->validate('login', 'password');
-    
-    my $form = $input->form_fields; # returns a V::C::P::FormFields object
-    
-    print $form->render_field('login', 'text');
-    print $form->render_field('password', 'password');
+    );
+
+    my $fields = $rules->plugin('form_fields');
+
+    print $fields->textbox('username');
+    print $fields->textbox('password', type => 'password');
+    print $fields->checkgroup('remember_me');
 
 =head1 DESCRIPTION
 
-More importanly than explaining what this plugin is, I will first proclaim what
-it IS NOT. Validation::Class::Plugin::FormFields is not an HTML form construction
-kit, nor is it a one-size-fits-all form handling machine, ... it is however a
-plugin for use with your L<Validation::Class> class that allows you to render
-HTML form fields based on your defined validation fields.
+Validation::Class::Plugin::FormFields is a plugin for L<Validation::Class>
+which can leverage your validation class field definitions to render HTML form
+elements. Please note that this plugin is intentionally lacking in
+sophistication and try to take as few liberties as possible.
 
-Why render fields individually and not the entire form?
-Form generation is pretty evil (IMHO), whereas the generating of HTML elements
-is alot less evil and definately alot more rational. Full-blown form generation
-locks you in a box offering only slight convenience and major headaches when you
-need anything more than the out-of-the-box generated output.
+=head1 RATIONALE
 
-Obviously we have to generate some output or this plugin would be a ridiculous
-waste of space, that said however, the generated HTML is sensible and consistent
-and allows easy CSS styling and JavaScript manipulation.
+Validation::Class::Plugin::FormFields is not an HTML form handler, nor is it an
+HTML form builder, renderer, construction kit, or framework. Why render fields
+individually and not the entire form? Form handling is a heavily opinionated
+subject and this plugin reflects the following perspective.
 
-For more information about defining fields (validation rules), feel free to look
-over L<Validation::Class>. 
+HTML form generation, done literally, has too many contraints and considerations
+to ever be truly ideal. Consider the following, it's been tried many many times
+before, it's never pretty, too many conflicting contexts (css, js, security and
+identification), css wants the form configured a certain way for styling
+purposes, js wants the form configured a certain way for introspection purposes,
+the app wants the form configured a certain way for processing purposes, etc.
 
-=head1 DISCLAIMER
+So why do we continue to try? HTML forms are like werewolves and developers love
+silver bullets, but bullets are actually made out of lead, not silver. So how do
+you kill werewolves with lead? Hint, not by shooting them obviously.
 
-B<EXPERIMENTAL>, Validation::Class::Plugin::FormFields is super new and is
-currently only a proof-of-concept. Though the current API is not expected to
-change much, I can't make any promises.
+I'd argue that we never really wanted complete form rendering anyway, what we
+actually wanted was a simple way to reduce the tedium and repetitiveness that
+comes with creating HTML form elements and handling submission and validation
+of the associated data. We keep getting it wrong because we keep trying to build
+on top of the same misconceptions.
 
-=head1 ATTRIBUTES
-
-=head2 field_templates
-
-The field_templates attribute holds a hashref of field template filenames and
-their shortnames.
-
-=head2 field_templates_location
-
-The field_templates_location attribute is the absolute location to the folder
-where the field templates are stored.
-
-=head1 METHODS
-
-=head2 field_template
-
-The field_template method returns the complete path and filename of the
-specified template.
-
-    my $input = MyApp::Validation->new(params => $params);
-    my $template = $input->form_fields->field_template('radio');
-
-=head2 render_field
-
-The render_field method renders an HTML block based on the specified arguments
-passed to it. This method takes three arguments, the name of the field, type of
-element to render, and an optional hashref to further configure the rendering
-process.
-
-The render_field method render an HTML control block and not just a single
-HTML element. The HTML control block will always be a div element which wraps
-the HTML form input fields.
-
-    package MyApp::Validation;
-    
-    use Validation::Class;
-    
-    load {
-        plugins => ['FormFields']
-    };
-    
-    field 'login'  => {
-        label      => 'User Login',
-        error      => 'Login invalid.',
-        required   => 1,
-        validation => sub {
-            my ($self, $this_field, $all_params) = @_;
-            return $this_field->{value} eq 'admin' ? 1 : 0;
-        }
-    };
-    
-    field 'password'  => {
-        label         => 'User Password',
-        error         => 'Password invalid.',
-        required      => 1,
-        validation    => sub {
-            my ($self, $this_field, $all_params) = @_;
-            return $this_field->{value} eq 'pass' ? 1 : 0;
-        }
-    };
-    
-    field 'remember'  => {
-        label         => 'Remember Authentication',
-        error         => 'Remember authentication invalid.',
-        options       => 'Yes, No'
-    };
-    
-    # elsewhere is the application
-    
-    package main ;
-    
-    my $input = MyApp::Validation->new(params => $params);
-    my $form  = $input->form_fields;
-    
-    my $user_field  = $form->render_field('login', 'text');
-    my $pass_field  = $form->render_field('password', 'password');
-    
-    my $remember_me = $form->render_field('remember', 'check', {
-        select  => 'Yes',
-        options => [
-            { text => 'Yes', value => 'Yes' },
-            { text => 'No', value => 'No' },
-        ]
-    });
-
-The following is a list of HTML elements that the render_field method can
-produce along with their syntax and options.
-
-=head3 check
-
-The check option instructs the render_field method to produce a checkbox or
-checkbox group depending on whether you supply an arrayref of options.
-
-    # renders a single checkbox 
-    my $checkbox = $form->render_field($field, 'check');
-
-    # renders a checkbox group
-    my $checkbox = $form->render_field($field, 'check', {
-        select  => [@default_value],
-        options => [
-            { text => '...', value => '...' },
-            { text => '...', value => '...' },
-        ]
-    });
-
-=head3 file
-
-The file option instructs the render_field method to produce a file upload
-form field.
-
-    # renders a single file element
-    my $upload = $form->render_field($field, 'file');
-
-=head3 hidden
-
-The hidden option instructs the render_field method to produce a hidden form
-field.
-
-    # renders a single hidden element
-    my $hidden = $form->render_field($field, 'hidden');
-
-=head3 password
-
-The password option instructs the render_field method to produce a
-password-protected input form field.
-
-    # renders a single password element
-    my $password = $form->render_field($field, 'password');
-
-=head3 radio
-
-The radio option instructs the render_field method to produce a radio button or
-radio button group depending on whether you supply an arrayref of options.
-
-    # renders a single radio button
-    my $radio = $form->render_field($field, 'radio');
-
-    # renders a radio button group
-    my $radio = $form->render_field($field, 'radio', {
-        select  => $default_value,
-        options => [
-            { text => '...', value => '...' },
-            { text => '...', value => '...' },
-        ]
-    });
-
-=head3 select
-
-The select option instructs the render_field method to produce a selectbox also
-known as a dropdown box.
-
-    # renders a single selectbox
-    my $selectbox = $form->render_field($field, 'selectbox');
-
-=head3 multi_select
-
-The multi_select option instructs the render_field method to produce a selectbox
-configured to allow the selection of multiple values.
-
-    # renders a multi selectbox or combobox
-    my $combobox = $form->render_field($field, 'multi_select', {
-        select  => [@default_values],
-        options => [
-            { text => '...', value => '...' },
-            { text => '...', value => '...' },
-        ]
-    });
-
-=head3 text
-
-The text option instructs the render_field method to produce a standard
-text input form field.
-
-    # renders a single textbox
-    my $text = $form->render_field($field, 'text');
-
-The HTML5 specification support an array of input types. You can cast the
-standard text input element into other type by specifying a type parameter as
-follows:
-
-    # renders an email textbox
-    my $email = $form->render_field($field, 'text', { type => 'email' });
-    
-    # renders a url textbox
-    my $website = $form->render_field($field, 'text', { type => 'url' });
-    
-    ...
-
-=head3 textarea
-
-The textarea option instructs the render_field method to produce a textarea for
-multi-line text input.
-
-    # renders a single textarea
-    my $textarea = $form->render_field($field, 'textarea');
-
-=head1 HTML FORM FIELD TEMPLATES
-
-The HTML form field elements are rendered via TT (template-toolkit) templates.
-The actual template files are embedded in this distribution however you may copy
-them to your current working directory by issuing the following command at the
-command-line:
-
-    $ vcformfields [<path>]
-
-Once copied and modified to your liking, specify the current working directory
-in your validation class instance as follows:
-
-    my $form = MyVal::Validation->new->form_fields;
-       $form->field_templates_location($location);
+So maybe we should backup a bit and try something different. The generating of
+HTML elements is alot less constrained and definately much more straight-forward.
 
 =head1 AUTHOR
 
-Al Newkirk <awncorp@cpan.org>
+Al Newkirk <anewkirk@ana.io>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2011 by awncorp.
+This software is copyright (c) 2011 by Al Newkirk.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

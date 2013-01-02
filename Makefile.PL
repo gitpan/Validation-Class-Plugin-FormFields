@@ -6,31 +6,24 @@ use warnings;
 
 use ExtUtils::MakeMaker 6.30;
 
-use File::ShareDir::Install;
-install_share dist => "share";
 
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "Validation::Class HTML Form Field Renderer",
-  "AUTHOR" => "Al Newkirk <awncorp\@cpan.org>",
+  "ABSTRACT" => "HTML Form Field Renderer for Validation::Class",
+  "AUTHOR" => "Al Newkirk <anewkirk\@ana.io>",
   "BUILD_REQUIRES" => {},
   "CONFIGURE_REQUIRES" => {
-    "ExtUtils::MakeMaker" => "6.30",
-    "File::ShareDir::Install" => "0.03"
+    "ExtUtils::MakeMaker" => "6.30"
   },
   "DISTNAME" => "Validation-Class-Plugin-FormFields",
-  "EXE_FILES" => [
-    "bin/vcformfields"
-  ],
+  "EXE_FILES" => [],
   "LICENSE" => "perl",
   "NAME" => "Validation::Class::Plugin::FormFields",
   "PREREQ_PM" => {
-    "File::Copy" => 0,
-    "File::ShareDir" => 0,
-    "Template" => 0,
-    "Validation::Class" => "5.20"
+    "HTML::Element" => 0,
+    "Validation::Class" => "7.900013"
   },
-  "VERSION" => "0.32",
+  "VERSION" => "0.33",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -55,10 +48,5 @@ delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
 
 WriteMakefile(%WriteMakefileArgs);
 
-{
-package
-MY;
-use File::ShareDir::Install qw(postamble);
-}
 
 

@@ -1,5 +1,0 @@
-<div class="form-field file">
-    <label for="[% field.name.safe_name() %]">[% IF field.label %][% field.label %][% ELSE %][% field.name.safe_name() %][% END %][% IF field.required %] <em>*</em>[% END %]</label>
-    <input type="file" id="[% field.name.safe_name() %]" name="[% field.name.safe_name() %]" [% IF field.required %]required="required"[% END %] value="[% class.params.$this || field.value || field.default %]" [% IF field.min_length %]minlength="[% field.min_length %]"[% END %] [% IF field.max_length %]maxlength="[% field.max_length %]"[% END %] class="[% field.name.safe_name() %]-control [% field.name.safe_name() %]" placeholder="[% IF field.label %][% field.label %][% ELSE %][% field.name.safe_name() %][% END %]" [% IF field.pattern %]pattern="[% field.pattern.safe_pattern() %]"[% END %] />
-    [% IF class.get_errors(field.name).size() %]<span class="errors">[% class.get_errors(field.name).join(', ') %]</span>[% END %]
-</div>
