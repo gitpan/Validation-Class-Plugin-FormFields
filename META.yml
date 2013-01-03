@@ -14,9 +14,9 @@ meta-spec:
 name: Validation-Class-Plugin-FormFields
 requires:
   HTML::Element: 0
-  Validation::Class: 7.900013
+  Validation::Class: 7.900014
 resources:
   bugtracker: https://github.com/alnewkirk/Validation-Class-Plugin-FormFields/issues
-  homepage: https://github.com/alnewkirk/Validation-Class-Plugin-FormFields
+  homepage: http://search.cpan.org/dist/Validation-Class-Plugin-FormFields/
   repository: git://github.com/alnewkirk/Validation-Class-Plugin-FormFields.git
-version: 0.33
+version: 0.34

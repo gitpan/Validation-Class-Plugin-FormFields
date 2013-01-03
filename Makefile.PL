@@ -21,9 +21,9 @@ my %WriteMakefileArgs = (
   "NAME" => "Validation::Class::Plugin::FormFields",
   "PREREQ_PM" => {
     "HTML::Element" => 0,
-    "Validation::Class" => "7.900013"
+    "Validation::Class" => "7.900014"
   },
-  "VERSION" => "0.33",
+  "VERSION" => "0.34",
   "test" => {
     "TESTS" => "t/*.t"
   }

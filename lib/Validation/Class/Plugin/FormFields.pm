@@ -11,7 +11,7 @@ use Carp;
 use Validation::Class::Util;
 use HTML::Element;
 
-our $VERSION = '0.33'; # VERSION
+our $VERSION = '0.34'; # VERSION
 
 
 sub new {
@@ -29,6 +29,7 @@ sub new {
 
 }
 
+
 sub checkbox {
 
     my ($self, $name, %attributes) = @_;
@@ -42,6 +43,7 @@ sub checkbox {
     return $self;
 
 }
+
 
 sub checkgroup {
 
@@ -333,13 +335,17 @@ sub _declare_textbox {
 
 }
 
+
 sub element {
 
-    my ($self) = @_;
+    my ($self, $target) = @_;
 
-    return $self->{elements}->{$self->{target}};
+    $target ||= $self->{target};
+
+    return $self->{elements}->{$target};
 
 }
+
 
 sub hidden {
 
@@ -355,6 +361,14 @@ sub hidden {
 
 }
 
+
+sub lockbox {
+
+    goto &password;
+
+}
+
+
 sub multiselect {
 
     my ($self, $name, %attributes) = @_;
@@ -369,6 +383,7 @@ sub multiselect {
 
 }
 
+
 sub password {
 
     my ($self, $name, %attributes) = @_;
@@ -380,6 +395,7 @@ sub password {
     return $self;
 
 }
+
 
 sub radiogroup {
 
@@ -395,6 +411,7 @@ sub radiogroup {
 
 }
 
+
 sub selectbox {
 
     my ($self, $name, %attributes) = @_;
@@ -407,6 +424,7 @@ sub selectbox {
 
 }
 
+
 sub textarea {
 
     my ($self, $name, %attributes) = @_;
@@ -418,6 +436,7 @@ sub textarea {
     return $self;
 
 }
+
 
 sub textbox {
 
@@ -433,15 +452,15 @@ sub textbox {
 
 }
 
+
 sub render {
 
-    my ($self)  = @_;
+    my ($self, $target)  = @_;
 
-    my $element = $self->element;
+    my $element = $self->element($target);
 
     return isa_arrayref($element) ?
-        join "\n", map { $_->as_HTML } @{$element} :
-        $element->as_HTML
+        [map { $_->as_HTML } @{$element}] : $element->as_HTML
     ;
 
 }
@@ -478,7 +497,7 @@ Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation:
 
 =head1 VERSION
 
-version 0.33
+version 0.34
 
 =head1 SYNOPSIS
 
@@ -488,17 +507,20 @@ version 0.33
 
     my $rules = Validation::Class::Simple->new(
         fields => {
-            username    => { required => 1 },
-            password    => { required => 1 },
-            remember_me => { required => 1, options => ['1|Remember Me?'] }
+            username => { required => 1 },
+            password => { required => 1 },
+            remember => { options  => 'remember' },
+            notify   => { options  => 'notify' }
         }
     );
 
     my $fields = $rules->plugin('form_fields');
 
-    print $fields->textbox('username');
-    print $fields->textbox('password', type => 'password');
-    print $fields->checkgroup('remember_me');
+    printf "%s\n", $fields->textbox('username', placeholder => 'Username');
+    printf "%s\n", $fields->lockbox('password', placeholder => 'Password');
+
+    printf "%s Remember Me?\n", $fields->checkbox('remember');
+    printf "%s Notify Me?\n",   $fields->checkbox('notify');
 
 =head1 DESCRIPTION
 
@@ -533,6 +555,231 @@ on top of the same misconceptions.
 
 So maybe we should backup a bit and try something different. The generating of
 HTML elements is alot less constrained and definately much more straight-forward.
+
+=head1 METHODS
+
+=head2 checkbox
+
+The checkbox method initializes an HTML::Element checkbox object to represent a
+checkbox in an HTML form. The value and checked attributes will be automatically
+included based on the state of the validation class prototype; determined based
+on the existence of the following: a parameter value, a field value, or field
+default value. Note that if multiple values exist, only the first value will be
+used.
+
+    $self->checkbox('field_name', %attributes_list);
+
+=head2 checkgroup
+
+The checkgroup method initializes an array of HTML::Element checkbox objects to
+represent a list of checkboxes in an HTML form. The value and checked attributes
+will be automatically included based on the state of the validation class
+prototype; determined based on the existence of the following: a parameter value,
+a field value, or field default value.
+
+Please note that rendering is based-on the options directive and each checkbox
+is appended with a span element containing the option's key or value for each
+individual option. Please see the
+L<"options directive"|Validation::Class::Directive::Options> for additional
+information.
+
+    field_name => {
+        options => [
+            'Choice 1',
+            'Choice 2',
+            'Choice 3',
+        ]
+    }
+
+    # or
+
+    field_name => {
+        options => [
+            '1|Choice 1',
+            '2|Choice 2',
+            '3|Choice 3',
+        ]
+    }
+
+    # then
+
+    $self->checkgroup('field_name', %attributes_list);
+
+=head2 element
+
+The element method returns the pre-configured HTML::Element object(s) for the
+given field, or the last field operated on if no argument is passed.
+
+    $self->element('field_name');
+
+=head2 hidden
+
+The hidden method initializes an HTML::Element hidden-field object to represent
+a hidden field in an HTML form. The value attribute will be automatically
+included based on the state of the validation class prototype; determined based
+on the existence of the following: a parameter value, a field value, or field
+default value. Note that if multiple values exist, only the first value will be
+used.
+
+    $self->hidden('field_name', %attributes_list);
+
+=head2 lockbox
+
+The lockbox method is an alias for the password method which initializes an
+HTML::Element password-field object to represent a password in an HTML form.
+The value attribute will be automatically included based on the state of the
+validation class prototype; determined based on the existence of the following:
+a parameter value, a field value, or field default value. Note that if multiple
+values exist, only the first value will be used.
+
+    $self->lockbox('field_name', %attributes_list);
+
+=head2 multiselect
+
+The multiselect method initializes an HTML::Element selectbox object to
+represent a selectbox with a list of options where multiple options may be
+selected in an HTML form. The value and selected attributes will be automatically
+included based on the state of the validation class prototype; determined based
+on the existence of the following: a parameter value, a field value, or field
+default value.
+
+Please note that rendering is based-on the options directive and each option
+element's contents contains the option's key or value for each individual option.
+Please see the L<"options directive"|Validation::Class::Directive::Options> for
+additional information.
+
+    field_name => {
+        options => [
+            'Choice 1',
+            'Choice 2',
+            'Choice 3',
+        ]
+    }
+
+    # or
+
+    field_name => {
+        options => [
+            '1|Choice 1',
+            '2|Choice 2',
+            '3|Choice 3',
+        ]
+    }
+
+    # then
+
+    $self->multiselect('field_name', %attributes_list);
+
+=head2 password
+
+The password method initializes an HTML::Element password-field object to
+represent a password in an HTML form. The value attribute will be automatically
+included based on the state of the validation class prototype; determined based
+on the existence of the following: a parameter value, a field value, or field
+default value. Note that if multiple values exist, only the first value will be
+used.
+
+    $self->password('field_name', %attributes_list);
+
+=head2 radiogroup
+
+The radiogroup method initializes an array of HTML::Element radiobutton objects
+to represent a list of radiobuttons in an HTML form. The value and checked
+attributes will be automatically included based on the state of the validation
+class prototype; determined based on the existence of the following: a parameter
+value, a field value, or field default value.
+
+Please note that rendering is based-on the options directive and each radiobutton
+is appended with a span element containing the option's key or value for each
+individual option. Please see the
+L<"options directive"|Validation::Class::Directive::Options> for additional
+information.
+
+    field_name => {
+        options => [
+            'Choice 1',
+            'Choice 2',
+            'Choice 3',
+        ]
+    }
+
+    # or
+
+    field_name => {
+        options => [
+            '1|Choice 1',
+            '2|Choice 2',
+            '3|Choice 3',
+        ]
+    }
+
+    # then
+
+    $self->radiogroup('field_name', %attributes_list);
+
+=head2 selectbox
+
+The selectbox method initializes an HTML::Element selectbox object to represent
+a selectbox with a list of options in an HTML form. The value and selected
+attributes will be automatically included based on the state of the validation
+class prototype; determined based on the existence of the following: a parameter
+value, a field value, or field default value.
+
+Please note that rendering is based-on the options directive and each option
+element's contents contains the option's key or value for each individual option.
+Please see the L<"options directive"|Validation::Class::Directive::Options> for
+additional information.
+
+    field_name => {
+        options => [
+            'Choice 1',
+            'Choice 2',
+            'Choice 3',
+        ]
+    }
+
+    # or
+
+    field_name => {
+        options => [
+            '1|Choice 1',
+            '2|Choice 2',
+            '3|Choice 3',
+        ]
+    }
+
+    # then
+
+    $self->selectbox('field_name', %attributes_list);
+
+=head2 textarea
+
+The textarea method initializes an HTML::Element textarea-field object to
+represent a textarea in an HTML form. The element's contents will be
+automatically included based on the state of the validation class prototype;
+determined based on the existence of the following: a parameter value, a field
+value, or field default value. Note that if multiple values exist, only the
+first value will be used.
+
+    $self->textarea('field_name', %attributes_list);
+
+=head2 textbox
+
+The textbox method initializes an HTML::Element textbox object to represent a
+textbox in an HTML form. The value attribute will be automatically included
+based on the state of the validation class prototype; determined based on the
+existence of the following: a parameter value, a field value, or field default
+value. Note that if multiple values exist, only the first value will be used.
+
+    $self->textbox('field_name', %attributes_list);
+
+=head2 render
+
+The render method renders-and-returns pre-configured HTML::Element object(s)
+for the given field, or the last field operated on if no argument is passed.
+This method is called automatically when the object is used in scalar context.
+
+    $self->render('field_name');
 
 =head1 AUTHOR
 
