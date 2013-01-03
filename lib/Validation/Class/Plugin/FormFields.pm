@@ -8,10 +8,11 @@ use overload '""' => \&render, fallback => 1;
 
 use Carp;
 
+use List::MoreUtils 'any';
 use Validation::Class::Util;
 use HTML::Element;
 
-our $VERSION = '0.34'; # VERSION
+our $VERSION = '0.35'; # VERSION
 
 
 sub new {
@@ -36,8 +37,6 @@ sub checkbox {
 
     $self->{target} = $name;
 
-    $attributes{type} ||= 'check';
-
     $self->declare('checkbox', $name, %attributes);
 
     return $self;
@@ -51,8 +50,6 @@ sub checkgroup {
 
     $self->{target} = $name;
 
-    $attributes{type} = 'check';
-
     $self->declare('checkgroup', $name, %attributes);
 
     return $self;
@@ -65,37 +62,41 @@ sub declare {
 
     my $proto = $self->{prototype};
 
-    exit croak q(Can't declare new element without a field and type),
+    croak qq(Can't declare new element without a field and type),
         unless $name && $method
     ;
 
-    exit croak sprintf q(Can't locate field "%s" for use with element "%s"),
-        $name, $method unless $proto->fields->has($name)
+    croak qq(Can't locate field $name for use with element $method),
+        unless $proto->fields->has($name)
     ;
 
-    my $field   = $proto->fields->get($name);
+    my $field = $proto->fields->get($name);
 
     $attributes{id}   ||= $field->name;
     $attributes{name} ||= $field->name;
 
-    # handle value conditions
     my $value;
 
     if (defined $attributes{value}) {
         $value = $attributes{value};
     }
 
-    elsif ($proto->params->has($name)) {
-        $value = $proto->params->get($name);
+    else {
+        $value = $field->default;
     }
 
-    else {
-        $value = $field->value || $field->default;
+    my $param = []; # everything gets easier if we always expect an arrayref
+
+    if ($proto->params->has($name)) {
+        $param = $proto->params->get($name);
+        $param = isa_arrayref($param) ? $param : [$param];
     }
 
     my $processor = "_declare_$method";
 
-    $self->$processor($field, $value, %attributes) if $self->can($processor);
+    $self->$processor($field, $param, $value, %attributes)
+        if $self->can($processor)
+    ;
 
     return $self;
 
@@ -103,17 +104,31 @@ sub declare {
 
 sub _declare_checkbox {
 
-    my ($self, $field, $value, %attributes) = @_;
+    my ($self, $field, $param, $value, %attributes) = @_;
 
     my $name = $field->name;
 
     my $element = HTML::Element->new('input');
 
-    # set value attribute
+    my $proto = $self->proto;
+
+    $attributes{type} ||= 'checkbox';
+
     $value = isa_arrayref($value) ? $value->[0] : $value;
+
+    croak qq(Can't process checkbox without a default value for field $name)
+        unless $value
+    ;
+
+    # set value attribute
     $attributes{value} = $value;
 
-    # set basic attributes
+    # set checked attribute
+    if (any { $_ eq $value } @{$param}) {
+        $attributes{checked} = 'checked';
+    }
+
+    # set attributes
     while (my($key, $val) = each(%attributes)) {
         $element->attr($key, $val);
     }
@@ -124,20 +139,28 @@ sub _declare_checkbox {
 
 sub _declare_checkgroup {
 
-    my ($self, $field, $value, %attributes) = @_;
+    my ($self, $field, $param, $value, %attributes) = @_;
 
     my $name = $field->name;
 
     my @elements = ();
 
-    # set value attribute
+    my $proto = $self->proto;
+
+    $attributes{type} ||= 'checkbox';
+
     $value = isa_arrayref($value) ? $value->[0] : $value;
+
+    # set value attribute (although it'll likely be overwritten)
     $attributes{value} = $value;
 
     my @opts = grep defined, @{$field->options};
-    my %vals = ();
 
-    %vals = map {$_=>$_} isa_arrayref($value) ? @{$value}:($value) if $value;
+    croak qq(Can't process checkbox group without options for field $name),
+        unless @opts
+    ;
+
+    my %values = map { $_ => $_ } @{$param};
 
     foreach my $opt (@opts) {
 
@@ -146,9 +169,11 @@ sub _declare_checkgroup {
         if ($opt =~ /^([^\|]+)?\|(.*)/) {
             ($v, $c) = $opt =~ /^([^\|]+)?\|(.*)/;
         }
+
         elsif (isa_arrayref($opt)) {
             ($v, $c) = @{$opt};
         }
+
         else {
             ($v, $c) = ($opt, $opt);
         }
@@ -162,7 +187,7 @@ sub _declare_checkgroup {
 
         $element->attr(value => $v);
         $element->push_content(HTML::Element->new('span', _content => [$c]));
-        $element->attr(checked => 'checked') if defined $vals{$v};
+        $element->attr(checked => 'checked') if $v eq $values{$v};
 
         push @elements, $element;
 
@@ -174,17 +199,26 @@ sub _declare_checkgroup {
 
 sub _declare_hidden {
 
-    my ($self, $field, $value, %attributes) = @_;
+    my ($self, $field, $param, $value, %attributes) = @_;
 
     my $name = $field->name;
 
     my $element = HTML::Element->new('input');
 
-    # set value attribute
+    my $proto = $self->proto;
+
+    $attributes{type} ||= 'hidden';
+
     $value = isa_arrayref($value) ? $value->[0] : $value;
+
+    croak qq(Can't process hidden field without a default value for field $name)
+        unless $value
+    ;
+
+    # set value attribute
     $attributes{value} = $value;
 
-    # set basic attributes
+    # set attributes
     while (my($key, $val) = each(%attributes)) {
         $element->attr($key, $val);
     }
@@ -195,25 +229,39 @@ sub _declare_hidden {
 
 sub _declare_selectbox {
 
-    my ($self, $field, $value, %attributes) = @_;
+    my ($self, $field, $param, $value, %attributes) = @_;
 
     my $name = $field->name;
 
     my $element = HTML::Element->new('select');
+
+    # default state (minor liberties taken)
+    if (defined $attributes{placeholder}) {
+        $element->push_content(
+            HTML::Element->new('option',
+                value => '', _content => [
+                    delete $attributes{placeholder}
+                ]
+            )
+        );
+    }
 
     # set basic attributes
     while (my($key, $val) = each(%attributes)) {
         $element->attr($key, $val);
     }
 
-    # set value attribute
+    my $proto = $self->proto;
+
     $value = isa_arrayref($value) ? $value->[0] : $value;
-    $attributes{value} = $value;
 
     my @opts = grep defined, @{$field->options};
-    my %vals = ();
 
-    %vals = map {$_=>$_} isa_arrayref($value) ? @{$value}:($value) if $value;
+    croak qq(Can't process selectbox without options for field $name),
+        unless @opts
+    ;
+
+    my %values = map { $_ => $_ } @{$param};
 
     foreach my $opt (@opts) {
 
@@ -222,9 +270,11 @@ sub _declare_selectbox {
         if ($opt =~ /^([^\|]+)?\|(.*)/) {
             ($v, $c) = $opt =~ /^([^\|]+)?\|(.*)/;
         }
+
         elsif (isa_arrayref($opt)) {
             ($v, $c) = @{$opt};
         }
+
         else {
             ($v, $c) = ($opt, $opt);
         }
@@ -233,7 +283,7 @@ sub _declare_selectbox {
 
         $option->attr(value => $v);
         $option->push_content($c);
-        $option->attr(selected => 'selected') if defined $vals{$v};
+        $option->attr(selected => 'selected') if $v eq $values{$v};
 
         $element->push_content($option);
 
@@ -243,22 +293,65 @@ sub _declare_selectbox {
 
 }
 
+sub _declare_radiobutton {
+
+    my ($self, $field, $param, $value, %attributes) = @_;
+
+    my $name = $field->name;
+
+    my $element = HTML::Element->new('input');
+
+    my $proto = $self->proto;
+
+    $attributes{type} ||= 'radio';
+
+    $value = isa_arrayref($value) ? $value->[0] : $value;
+
+    croak qq(Can't process radiobutton without a default value for field $name)
+        unless $value
+    ;
+
+    # set value attribute
+    $attributes{value} = $value;
+
+    # set checked attribute
+    if (any { $_ eq $value } @{$param}) {
+        $attributes{checked} = 'checked';
+    }
+
+    # set attributes
+    while (my($key, $val) = each(%attributes)) {
+        $element->attr($key, $val);
+    }
+
+    return $self->{elements}->{$name} = $element;
+
+}
+
 sub _declare_radiogroup {
 
-    my ($self, $field, $value, %attributes) = @_;
+    my ($self, $field, $param, $value, %attributes) = @_;
 
     my $name = $field->name;
 
     my @elements = ();
 
-    # set value attribute
+    my $proto = $self->proto;
+
+    $attributes{type} ||= 'radio';
+
     $value = isa_arrayref($value) ? $value->[0] : $value;
+
+    # set value attribute (although it'll likely be overwritten)
     $attributes{value} = $value;
 
     my @opts = grep defined, @{$field->options};
-    my %vals = ();
 
-    %vals = map {$_=>$_} isa_arrayref($value) ? @{$value}:($value) if $value;
+    croak qq(Can't process radio group without options for field $name),
+        unless @opts
+    ;
+
+    my %values = map { $_ => $_ } @{$param};
 
     foreach my $opt (@opts) {
 
@@ -267,9 +360,11 @@ sub _declare_radiogroup {
         if ($opt =~ /^([^\|]+)?\|(.*)/) {
             ($v, $c) = $opt =~ /^([^\|]+)?\|(.*)/;
         }
+
         elsif (isa_arrayref($opt)) {
             ($v, $c) = @{$opt};
         }
+
         else {
             ($v, $c) = ($opt, $opt);
         }
@@ -283,7 +378,7 @@ sub _declare_radiogroup {
 
         $element->attr(value => $v);
         $element->push_content(HTML::Element->new('span', _content => [$c]));
-        $element->attr(checked => 'checked') if defined $vals{$v};
+        $element->attr(checked => 'checked') if $v eq $values{$v};
 
         push @elements, $element;
 
@@ -295,14 +390,18 @@ sub _declare_radiogroup {
 
 sub _declare_textarea {
 
-    my ($self, $field, $value, %attributes) = @_;
+    my ($self, $field, $param, $value, %attributes) = @_;
 
     my $name = $field->name;
 
     my $element = HTML::Element->new('textarea');
 
-    # set value attribute
-    $value = isa_arrayref($value) ? $value->[0] : $value;
+    my $proto = $self->proto;
+
+    $attributes{type} ||= 'text';
+
+    $value = $param->[0] || (isa_arrayref($value) ? $value->[0] : $value);
+
     $element->push_content($value);
 
     # set basic attributes
@@ -316,17 +415,22 @@ sub _declare_textarea {
 
 sub _declare_textbox {
 
-    my ($self, $field, $value, %attributes) = @_;
+    my ($self, $field, $param, $value, %attributes) = @_;
 
     my $name = $field->name;
 
     my $element = HTML::Element->new('input');
 
+    my $proto = $self->proto;
+
+    $attributes{type} ||= 'text';
+
+    $value = $param->[0] || (isa_arrayref($value) ? $value->[0] : $value);
+
     # set value attribute
-    $value = isa_arrayref($value) ? $value->[0] : $value;
     $attributes{value} = $value;
 
-    # set basic attributes
+    # set attributes
     while (my($key, $val) = each(%attributes)) {
         $element->attr($key, $val);
     }
@@ -352,8 +456,6 @@ sub hidden {
     my ($self, $name, %attributes) = @_;
 
     $self->{target} = $name;
-
-    $attributes{type} ||= 'hidden';
 
     $self->declare('hidden', $name, %attributes);
 
@@ -396,14 +498,39 @@ sub password {
 
 }
 
+sub proto {
+
+    goto &prototype;
+
+}
+
+sub prototype {
+
+    my ($self) = @_;
+
+    return $self->{prototype};
+
+}
+
+
+sub radiobutton {
+
+    my ($self, $name, %attributes) = @_;
+
+    $self->{target} = $name;
+
+    $self->declare('radiobutton', $name, %attributes);
+
+    return $self;
+
+}
+
 
 sub radiogroup {
 
     my ($self, $name, %attributes) = @_;
 
     $self->{target} = $name;
-
-    $attributes{type} = 'radio';
 
     $self->declare('radiogroup', $name, %attributes);
 
@@ -443,8 +570,6 @@ sub textbox {
     my ($self, $name, %attributes) = @_;
 
     $self->{target} = $name;
-
-    $attributes{type} ||= 'text';
 
     $self->declare('textbox', $name, %attributes);
 
@@ -488,7 +613,8 @@ sub render_inner {
 
 1;
 
-__END__
+
+
 =pod
 
 =head1 NAME
@@ -497,7 +623,7 @@ Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation:
 
 =head1 VERSION
 
-version 0.34
+version 0.35
 
 =head1 SYNOPSIS
 
@@ -545,16 +671,15 @@ the app wants the form configured a certain way for processing purposes, etc.
 
 So why do we continue to try? HTML forms are like werewolves and developers love
 silver bullets, but bullets are actually made out of lead, not silver. So how do
-you kill werewolves with lead? Hint, not by shooting them obviously.
-
-I'd argue that we never really wanted complete form rendering anyway, what we
-actually wanted was a simple way to reduce the tedium and repetitiveness that
-comes with creating HTML form elements and handling submission and validation
-of the associated data. We keep getting it wrong because we keep trying to build
-on top of the same misconceptions.
+you kill werewolves with lead? Hint, not by shooting them obviously. I'd argue
+that we never really wanted complete form rendering anyway, what we actually
+wanted was a simple way to reduce the tedium and repetitiveness that comes with
+creating HTML form elements and handling submission and validation of the
+associated data. We keep getting it wrong because we keep trying to build on
+top of the same misconceptions.
 
 So maybe we should backup a bit and try something different. The generating of
-HTML elements is alot less constrained and definately much more straight-forward.
+HTML elements is much less constrained and definately much more straight-forward.
 
 =head1 METHODS
 
@@ -575,13 +700,11 @@ The checkgroup method initializes an array of HTML::Element checkbox objects to
 represent a list of checkboxes in an HTML form. The value and checked attributes
 will be automatically included based on the state of the validation class
 prototype; determined based on the existence of the following: a parameter value,
-a field value, or field default value.
-
-Please note that rendering is based-on the options directive and each checkbox
-is appended with a span element containing the option's key or value for each
-individual option. Please see the
+a field value, or field default value. Please note that rendering is based-on
+the options directive and each checkbox is appended with a span element
+containing the option's key or value for each individual option. Please see the
 L<"options directive"|Validation::Class::Directive::Options> for additional
-information.
+information. The rendered elements will always be returned as an array.
 
     field_name => {
         options => [
@@ -641,12 +764,10 @@ represent a selectbox with a list of options where multiple options may be
 selected in an HTML form. The value and selected attributes will be automatically
 included based on the state of the validation class prototype; determined based
 on the existence of the following: a parameter value, a field value, or field
-default value.
-
-Please note that rendering is based-on the options directive and each option
-element's contents contains the option's key or value for each individual option.
-Please see the L<"options directive"|Validation::Class::Directive::Options> for
-additional information.
+default value. Please note that rendering is based-on the options directive and
+each option element's contents contains the option's key or value for each
+individual option. Please see the L<"options directive"|Validation::Class::Directive::Options>
+for additional information.
 
     field_name => {
         options => [
@@ -681,19 +802,29 @@ used.
 
     $self->password('field_name', %attributes_list);
 
+=head2 radiobutton
+
+The radiobutton method initializes an HTML::Element radiobutton object to
+represent a radio-button in an HTML form. The value and checked attributes will
+be automatically included based on the state of the validation class prototype;
+determined based on the existence of the following: a parameter value, a field
+value, or field default value. Note that if multiple values exist, only the
+first value will be used.
+
+    $self->radiobutton('field_name', %attributes_list);
+
 =head2 radiogroup
 
 The radiogroup method initializes an array of HTML::Element radiobutton objects
 to represent a list of radiobuttons in an HTML form. The value and checked
 attributes will be automatically included based on the state of the validation
 class prototype; determined based on the existence of the following: a parameter
-value, a field value, or field default value.
-
-Please note that rendering is based-on the options directive and each radiobutton
-is appended with a span element containing the option's key or value for each
-individual option. Please see the
-L<"options directive"|Validation::Class::Directive::Options> for additional
-information.
+value, a field value, or field default value. Please note that rendering is
+based-on the options directive and each radiobutton is appended with a span
+element containing the option's key or value for each individual option. Please
+see the L<"options directive"|Validation::Class::Directive::Options> for
+additional information. The rendered elements will always be returned as an
+array.
 
     field_name => {
         options => [
@@ -723,12 +854,11 @@ The selectbox method initializes an HTML::Element selectbox object to represent
 a selectbox with a list of options in an HTML form. The value and selected
 attributes will be automatically included based on the state of the validation
 class prototype; determined based on the existence of the following: a parameter
-value, a field value, or field default value.
-
-Please note that rendering is based-on the options directive and each option
-element's contents contains the option's key or value for each individual option.
-Please see the L<"options directive"|Validation::Class::Directive::Options> for
-additional information.
+value, a field value, or field default value. Please note that rendering is
+based-on the options directive and each option element's contents contains the
+option's key or value for each individual option. Please see the
+L<"options directive"|Validation::Class::Directive::Options> for additional
+information.
 
     field_name => {
         options => [
@@ -751,6 +881,11 @@ additional information.
     # then
 
     $self->selectbox('field_name', %attributes_list);
+
+    # or, in keeping with convention, ...
+    # to include a default state, i.e. an initial option with an blank value
+
+    $self->selectbox('field_name', placeholder => 'Choose One');
 
 =head2 textarea
 
@@ -794,3 +929,9 @@ the same terms as the Perl 5 programming language system itself.
 
 =cut
 
+
+__DATA__
+
+* anything that can be checked or selected automatically must have a default
+value (i.e. a manually specified default, or a list of options)
+*

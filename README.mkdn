@@ -4,7 +4,7 @@ Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation:
 
 # VERSION
 
-version 0.34
+version 0.35
 
 # SYNOPSIS
 
@@ -52,16 +52,15 @@ the app wants the form configured a certain way for processing purposes, etc.
 
 So why do we continue to try? HTML forms are like werewolves and developers love
 silver bullets, but bullets are actually made out of lead, not silver. So how do
-you kill werewolves with lead? Hint, not by shooting them obviously.
-
-I'd argue that we never really wanted complete form rendering anyway, what we
-actually wanted was a simple way to reduce the tedium and repetitiveness that
-comes with creating HTML form elements and handling submission and validation
-of the associated data. We keep getting it wrong because we keep trying to build
-on top of the same misconceptions.
+you kill werewolves with lead? Hint, not by shooting them obviously. I'd argue
+that we never really wanted complete form rendering anyway, what we actually
+wanted was a simple way to reduce the tedium and repetitiveness that comes with
+creating HTML form elements and handling submission and validation of the
+associated data. We keep getting it wrong because we keep trying to build on
+top of the same misconceptions.
 
 So maybe we should backup a bit and try something different. The generating of
-HTML elements is alot less constrained and definately much more straight-forward.
+HTML elements is much less constrained and definately much more straight-forward.
 
 # METHODS
 
@@ -82,13 +81,11 @@ The checkgroup method initializes an array of HTML::Element checkbox objects to
 represent a list of checkboxes in an HTML form. The value and checked attributes
 will be automatically included based on the state of the validation class
 prototype; determined based on the existence of the following: a parameter value,
-a field value, or field default value.
-
-Please note that rendering is based-on the options directive and each checkbox
-is appended with a span element containing the option's key or value for each
-individual option. Please see the
+a field value, or field default value. Please note that rendering is based-on
+the options directive and each checkbox is appended with a span element
+containing the option's key or value for each individual option. Please see the
 ["options directive"](http://search.cpan.org/perldoc?Validation::Class::Directive::Options) for additional
-information.
+information. The rendered elements will always be returned as an array.
 
     field_name => {
         options => [
@@ -148,12 +145,10 @@ represent a selectbox with a list of options where multiple options may be
 selected in an HTML form. The value and selected attributes will be automatically
 included based on the state of the validation class prototype; determined based
 on the existence of the following: a parameter value, a field value, or field
-default value.
-
-Please note that rendering is based-on the options directive and each option
-element's contents contains the option's key or value for each individual option.
-Please see the ["options directive"](http://search.cpan.org/perldoc?Validation::Class::Directive::Options) for
-additional information.
+default value. Please note that rendering is based-on the options directive and
+each option element's contents contains the option's key or value for each
+individual option. Please see the ["options directive"](http://search.cpan.org/perldoc?Validation::Class::Directive::Options)
+for additional information.
 
     field_name => {
         options => [
@@ -188,19 +183,29 @@ used.
 
     $self->password('field_name', %attributes_list);
 
+## radiobutton
+
+The radiobutton method initializes an HTML::Element radiobutton object to
+represent a radio-button in an HTML form. The value and checked attributes will
+be automatically included based on the state of the validation class prototype;
+determined based on the existence of the following: a parameter value, a field
+value, or field default value. Note that if multiple values exist, only the
+first value will be used.
+
+    $self->radiobutton('field_name', %attributes_list);
+
 ## radiogroup
 
 The radiogroup method initializes an array of HTML::Element radiobutton objects
 to represent a list of radiobuttons in an HTML form. The value and checked
 attributes will be automatically included based on the state of the validation
 class prototype; determined based on the existence of the following: a parameter
-value, a field value, or field default value.
-
-Please note that rendering is based-on the options directive and each radiobutton
-is appended with a span element containing the option's key or value for each
-individual option. Please see the
-["options directive"](http://search.cpan.org/perldoc?Validation::Class::Directive::Options) for additional
-information.
+value, a field value, or field default value. Please note that rendering is
+based-on the options directive and each radiobutton is appended with a span
+element containing the option's key or value for each individual option. Please
+see the ["options directive"](http://search.cpan.org/perldoc?Validation::Class::Directive::Options) for
+additional information. The rendered elements will always be returned as an
+array.
 
     field_name => {
         options => [
@@ -230,12 +235,11 @@ The selectbox method initializes an HTML::Element selectbox object to represent
 a selectbox with a list of options in an HTML form. The value and selected
 attributes will be automatically included based on the state of the validation
 class prototype; determined based on the existence of the following: a parameter
-value, a field value, or field default value.
-
-Please note that rendering is based-on the options directive and each option
-element's contents contains the option's key or value for each individual option.
-Please see the ["options directive"](http://search.cpan.org/perldoc?Validation::Class::Directive::Options) for
-additional information.
+value, a field value, or field default value. Please note that rendering is
+based-on the options directive and each option element's contents contains the
+option's key or value for each individual option. Please see the
+["options directive"](http://search.cpan.org/perldoc?Validation::Class::Directive::Options) for additional
+information.
 
     field_name => {
         options => [
@@ -258,6 +262,11 @@ additional information.
     # then
 
     $self->selectbox('field_name', %attributes_list);
+
+    # or, in keeping with convention, ...
+    # to include a default state, i.e. an initial option with an blank value
+
+    $self->selectbox('field_name', placeholder => 'Choose One');
 
 ## textarea
 
