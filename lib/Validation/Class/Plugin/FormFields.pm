@@ -12,7 +12,7 @@ use List::MoreUtils 'any';
 use Validation::Class::Util;
 use HTML::Element;
 
-our $VERSION = '0.35'; # VERSION
+our $VERSION = '0.36'; # VERSION
 
 
 sub new {
@@ -623,7 +623,7 @@ Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation:
 
 =head1 VERSION
 
-version 0.35
+version 0.36
 
 =head1 SYNOPSIS
 
@@ -644,9 +644,6 @@ version 0.35
 
     printf "%s\n", $fields->textbox('username', placeholder => 'Username');
     printf "%s\n", $fields->lockbox('password', placeholder => 'Password');
-
-    printf "%s Remember Me?\n", $fields->checkbox('remember');
-    printf "%s Notify Me?\n",   $fields->checkbox('notify');
 
 =head1 DESCRIPTION
 

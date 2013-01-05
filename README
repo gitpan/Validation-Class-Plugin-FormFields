@@ -3,7 +3,7 @@ NAME
     Validation::Class
 
 VERSION
-    version 0.35
+    version 0.36
 
 SYNOPSIS
         # THIS PLUGIN IS UNTESTED AND MAY BE SUBJECT TO DESIGN CHANGES!!!
@@ -23,9 +23,6 @@ SYNOPSIS
 
         printf "%s\n", $fields->textbox('username', placeholder => 'Username');
         printf "%s\n", $fields->lockbox('password', placeholder => 'Password');
-
-        printf "%s Remember Me?\n", $fields->checkbox('remember');
-        printf "%s Notify Me?\n",   $fields->checkbox('notify');
 
 DESCRIPTION
     Validation::Class::Plugin::FormFields is a plugin for Validation::Class
