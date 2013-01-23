@@ -12,7 +12,7 @@ use List::MoreUtils 'any';
 use Validation::Class::Util;
 use HTML::Element;
 
-our $VERSION = '0.37'; # VERSION
+our $VERSION = '7.900020'; # VERSION
 
 
 sub new {
@@ -623,7 +623,7 @@ Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation:
 
 =head1 VERSION
 
-version 0.37
+version 7.900020
 
 =head1 SYNOPSIS
 

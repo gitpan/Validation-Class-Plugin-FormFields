@@ -23,7 +23,7 @@ my %WriteMakefileArgs = (
     "HTML::Element" => 0,
     "Validation::Class" => 0
   },
-  "VERSION" => "0.37",
+  "VERSION" => "7.900020",
   "test" => {
     "TESTS" => "t/*.t"
   }
