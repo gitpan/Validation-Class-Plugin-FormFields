@@ -12,7 +12,7 @@ use List::MoreUtils 'any';
 use Validation::Class::Util;
 use HTML::Element;
 
-our $VERSION = '7.900020'; # VERSION
+our $VERSION = '7.900021'; # VERSION
 
 
 sub new {
@@ -53,6 +53,42 @@ sub checkgroup {
     $self->declare('checkgroup', $name, %attributes);
 
     return $self;
+
+}
+
+
+sub error_count {
+
+    my $self = shift;
+
+    return $self->prototype->error_count(@_);
+
+}
+
+
+sub error_fields {
+
+    my $self = shift;
+
+    return $self->prototype->error_fields(@_);
+
+}
+
+
+sub errors {
+
+    my $self = shift;
+
+    return $self->prototype->errors(@_);
+
+}
+
+
+sub errors_to_string {
+
+    my $self = shift;
+
+    return $self->prototype->errors_to_string(@_);
 
 }
 
@@ -504,6 +540,7 @@ sub proto {
 
 }
 
+
 sub prototype {
 
     my ($self) = @_;
@@ -613,8 +650,7 @@ sub render_inner {
 
 1;
 
-
-
+__END__
 =pod
 
 =head1 NAME
@@ -623,13 +659,14 @@ Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation:
 
 =head1 VERSION
 
-version 7.900020
+version 7.900021
 
 =head1 SYNOPSIS
 
-    # THIS PLUGIN IS UNTESTED AND MAY BE SUBJECT TO DESIGN CHANGES!!!
+    # this plugin is in working condition but untested!!!
 
     use Validation::Class::Simple;
+    use Validation::Class::Plugin::FormFields;
 
     my $rules = Validation::Class::Simple->new(
         fields => {
@@ -725,6 +762,30 @@ information. The rendered elements will always be returned as an array.
 
     $self->checkgroup('field_name', %attributes_list);
 
+=head2 error_count
+
+    $self->error_count;
+
+See L<Validation::Class::Prototype/error_count> for full documentation.
+
+=head2 error_fields
+
+    $self->error_fields;
+
+See L<Validation::Class::Prototype/error_fields> for full documentation.
+
+=head2 errors
+
+    $self->errors;
+
+See L<Validation::Class::Prototype/errors> for full documentation.
+
+=head2 errors_to_string
+
+    $self->errors_to_string;
+
+See L<Validation::Class::Prototype/errors_to_string> for full documentation.
+
 =head2 element
 
 The element method returns the pre-configured HTML::Element object(s) for the
@@ -798,6 +859,13 @@ default value. Note that if multiple values exist, only the first value will be
 used.
 
     $self->password('field_name', %attributes_list);
+
+=head2 prototype
+
+The prototype (or proto) method returns the underlying
+L<Validation::Class::Prototype> object.
+
+    $self->prototype;
 
 =head2 radiobutton
 
@@ -926,9 +994,3 @@ the same terms as the Perl 5 programming language system itself.
 
 =cut
 
-
-__DATA__
-
-* anything that can be checked or selected automatically must have a default
-value (i.e. a manually specified default, or a list of options)
-*

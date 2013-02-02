@@ -1,9 +1,13 @@
 Revision history for the Perl library Validation::Class::Plugin::FormFields
 
-0.35  2013-01-03
+7.900021  2013-02-02
+
+  - added direct access to various error handling methods
+
+  - correct minor issues in the documentation
+
+  - fixed a PAUSE processing issue
 
   -  refactored parameter handling, added radiobutton support
-
-0.33  2013-01-02
 
   - released complete rewrite (untested)

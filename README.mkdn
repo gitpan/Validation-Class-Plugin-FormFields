@@ -4,13 +4,14 @@ Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation:
 
 # VERSION
 
-version 7.900020
+version 7.900021
 
 # SYNOPSIS
 
-    # THIS PLUGIN IS UNTESTED AND MAY BE SUBJECT TO DESIGN CHANGES!!!
+    # this plugin is in working condition but untested!!!
 
     use Validation::Class::Simple;
+    use Validation::Class::Plugin::FormFields;
 
     my $rules = Validation::Class::Simple->new(
         fields => {
@@ -106,6 +107,30 @@ information. The rendered elements will always be returned as an array.
 
     $self->checkgroup('field_name', %attributes_list);
 
+## error\_count
+
+    $self->error_count;
+
+See ["error\_count" in Validation::Class::Prototype](http://search.cpan.org/perldoc?Validation::Class::Prototype#error\_count) for full documentation.
+
+## error\_fields
+
+    $self->error_fields;
+
+See ["error\_fields" in Validation::Class::Prototype](http://search.cpan.org/perldoc?Validation::Class::Prototype#error\_fields) for full documentation.
+
+## errors
+
+    $self->errors;
+
+See ["errors" in Validation::Class::Prototype](http://search.cpan.org/perldoc?Validation::Class::Prototype#errors) for full documentation.
+
+## errors\_to\_string
+
+    $self->errors_to_string;
+
+See ["errors\_to\_string" in Validation::Class::Prototype](http://search.cpan.org/perldoc?Validation::Class::Prototype#errors\_to\_string) for full documentation.
+
 ## element
 
 The element method returns the pre-configured HTML::Element object(s) for the
@@ -179,6 +204,13 @@ default value. Note that if multiple values exist, only the first value will be
 used.
 
     $self->password('field_name', %attributes_list);
+
+## prototype
+
+The prototype (or proto) method returns the underlying
+[Validation::Class::Prototype](http://search.cpan.org/perldoc?Validation::Class::Prototype) object.
+
+    $self->prototype;
 
 ## radiobutton
 

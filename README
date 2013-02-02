@@ -3,12 +3,13 @@ NAME
     Validation::Class
 
 VERSION
-    version 7.900020
+    version 7.900021
 
 SYNOPSIS
-        # THIS PLUGIN IS UNTESTED AND MAY BE SUBJECT TO DESIGN CHANGES!!!
+        # this plugin is in working condition but untested!!!
 
         use Validation::Class::Simple;
+        use Validation::Class::Plugin::FormFields;
 
         my $rules = Validation::Class::Simple->new(
             fields => {
@@ -104,6 +105,29 @@ METHODS
 
         $self->checkgroup('field_name', %attributes_list);
 
+  error_count
+        $self->error_count;
+
+    See "error_count" in Validation::Class::Prototype for full
+    documentation.
+
+  error_fields
+        $self->error_fields;
+
+    See "error_fields" in Validation::Class::Prototype for full
+    documentation.
+
+  errors
+        $self->errors;
+
+    See "errors" in Validation::Class::Prototype for full documentation.
+
+  errors_to_string
+        $self->errors_to_string;
+
+    See "errors_to_string" in Validation::Class::Prototype for full
+    documentation.
+
   element
     The element method returns the pre-configured HTML::Element object(s)
     for the given field, or the last field operated on if no argument is
@@ -174,6 +198,12 @@ METHODS
     multiple values exist, only the first value will be used.
 
         $self->password('field_name', %attributes_list);
+
+  prototype
+    The prototype (or proto) method returns the underlying
+    Validation::Class::Prototype object.
+
+        $self->prototype;
 
   radiobutton
     The radiobutton method initializes an HTML::Element radiobutton object
