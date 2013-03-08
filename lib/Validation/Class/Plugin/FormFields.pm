@@ -12,7 +12,7 @@ use List::MoreUtils 'any';
 use Validation::Class::Util;
 use HTML::Element;
 
-our $VERSION = '7.900021'; # VERSION
+our $VERSION = '7.900022'; # VERSION
 
 
 sub new {
@@ -317,9 +317,11 @@ sub _declare_selectbox {
 
         my $option = HTML::Element->new('option');
 
-        $option->attr(value => $v);
-        $option->push_content($c);
-        $option->attr(selected => 'selected') if $v eq $values{$v};
+        $option->attr(value => $v || '');
+        $option->push_content( $c || '');
+        $option->attr(selected => 'selected') 
+            if ($v && $values{$v}) and ($v eq $values{$v})
+        ;
 
         $element->push_content($option);
 
@@ -438,7 +440,7 @@ sub _declare_textarea {
 
     $value = $param->[0] || (isa_arrayref($value) ? $value->[0] : $value);
 
-    $element->push_content($value);
+    $element->push_content($value || '');
 
     # set basic attributes
     while (my($key, $val) = each(%attributes)) {
@@ -651,6 +653,7 @@ sub render_inner {
 1;
 
 __END__
+
 =pod
 
 =head1 NAME
@@ -659,7 +662,7 @@ Validation::Class::Plugin::FormFields - HTML Form Field Renderer for Validation:
 
 =head1 VERSION
 
-version 7.900021
+version 7.900022
 
 =head1 SYNOPSIS
 
@@ -993,4 +996,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-

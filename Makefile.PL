@@ -11,7 +11,9 @@ use ExtUtils::MakeMaker 6.30;
 my %WriteMakefileArgs = (
   "ABSTRACT" => "HTML Form Field Renderer for Validation::Class",
   "AUTHOR" => "Al Newkirk <anewkirk\@ana.io>",
-  "BUILD_REQUIRES" => {},
+  "BUILD_REQUIRES" => {
+    "Validation::Class" => "7.900021"
+  },
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30"
   },
@@ -21,9 +23,9 @@ my %WriteMakefileArgs = (
   "NAME" => "Validation::Class::Plugin::FormFields",
   "PREREQ_PM" => {
     "HTML::Element" => 0,
-    "Validation::Class" => 0
+    "Validation::Class" => "7.900021"
   },
-  "VERSION" => "7.900021",
+  "VERSION" => "7.900022",
   "test" => {
     "TESTS" => "t/*.t"
   }
